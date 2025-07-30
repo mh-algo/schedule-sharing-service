@@ -1,0 +1,66 @@
+name: CICD
+on: workflow_dispatch
+defaults:
+  run:
+    shell: bash
+env:
+  OCIR_USERNAME: ${{ vars.OCIR_NAMESPACE }}/${{ vars.OCI_USERNAME }}
+  OCIR_NAMESPACE: ${{ vars.OCIR_NAMESPACE }}
+  REGISTRY: ap-chuncheon-1.ocir.io
+  IMAGE_NAME: schedule
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to OCIR   # 컨테이너 레지스트리 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.OCIR_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
+      - name: Docker meta   # 컨테이너 이미지의 메타데이터 생성
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          tags: type=raw,value=dev
+      - name: Build and push    # 컨테이너 이미지 빌드와 푸시
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    env:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_KEY_FILE: ~/.ssh/ssh-key.key
+    steps:
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_KEY}" >> "${SSH_KEY_FILE}"
+          chmod 600 "${SSH_KEY_FILE}"
+      - name: Deploy to OCI via SSH
+        run: |
+          ssh -i "${SSH_KEY_FILE}" -o StrictHostKeyChecking=no deploy@"${HOST}" << EOF
+            docker login "${REGISTRY}" -u "${OCIR_USERNAME}" -p "${OCI_TOKEN}"
+            docker pull "${IMAGE}"
+            docker rm -f "${IMAGE_NAME}" || true
+            docker run -d -p 8080:8080 -p 5005:5005 \
+            -e DB_URL="${DB_URL}" \
+            -e DB_NAME="${DB_NAME}" \
+            -e DB_USERNAME="${DB_USERNAME}" \
+            -e DB_PASSWORD="${DB_PASSWORD}" \
+            --name "${IMAGE_NAME}" "${IMAGE}"
+          EOF
+        env:
+          HOST: ${{ secrets.HOST }}
+          OCI_TOKEN: ${{ secrets.OCI_TOKEN }}
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}:dev
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
