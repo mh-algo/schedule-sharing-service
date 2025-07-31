@@ -6,7 +6,7 @@ COPY gradlew gradlew.bat /app/
 COPY gradle/wrapper /app/gradle/wrapper
 COPY build.gradle settings.gradle /app/
 
-RUN ./gradlew dependencies --no-daemon
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
 
 COPY ./src/main /app/src/main
 
