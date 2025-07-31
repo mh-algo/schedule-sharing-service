@@ -94,20 +94,21 @@ jobs:
         run: |
           ssh -i "$HOME/.ssh/ssh-key.key" -o StrictHostKeyChecking=no deploy@"${HOST}" << EOF
             docker login "${REGISTRY}" -u "${OCIR_USERNAME}" -p "${OCI_TOKEN}"
-            docker rmi "${IMAGE}" || true
-            docker pull "${IMAGE}"
+            docker tag "${IMAGE}:dev" "${IMAGE}:backup" || true
+            docker pull "${IMAGE}:dev"
             docker rm -f "${IMAGE_NAME}" || true
+            docker rmi "${IMAGE}:backup" || true
             docker run -d -p 8080:8080 -p 5005:5005 \
             -e DB_URL="${DB_URL}" \
             -e DB_NAME="${DB_NAME}" \
             -e DB_USERNAME="${DB_USERNAME}" \
             -e DB_PASSWORD="${DB_PASSWORD}" \
-            --name "${IMAGE_NAME}" "${IMAGE}"
+            --name "${IMAGE_NAME}" "${IMAGE}:dev"
           EOF
         env:
           HOST: ${{ secrets.HOST }}
           OCI_TOKEN: ${{ secrets.OCI_TOKEN }}
-          IMAGE: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}:dev
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}
           DB_URL: ${{ secrets.DB_URL }}
           DB_NAME: ${{ vars.DB_NAME }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
