@@ -45,7 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: schedule-sharing-jar
-          path: ./build/libs/schedule-sharing-service-0.0.1-SNAPSHOT.jar
+          path: build/libs/schedule-sharing-service-0.0.1-SNAPSHOT.jar
           retention-days: 7
   publish:
     runs-on: ubuntu-latest
@@ -55,7 +55,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: schedule-sharing-jar
-          path: ./build/libs
+          path: build/libs
+      - name: JAR check
+        run: |
+          ls -al ./build/libs
+          pwd
       - name: Login to OCIR   # 컨테이너 레지스트리 로그인
         uses: docker/login-action@v3
         with:
