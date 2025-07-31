@@ -50,6 +50,7 @@ jobs:
         run: |
           ssh -i "$HOME/.ssh/ssh-key.key" -o StrictHostKeyChecking=no deploy@"${HOST}" << EOF
             docker login "${REGISTRY}" -u "${OCIR_USERNAME}" -p "${OCI_TOKEN}"
+            docker rmi "${IMAGE}" || true
             docker pull "${IMAGE}"
             docker rm -f "${IMAGE_NAME}" || true
             docker run -d -p 8080:8080 -p 5005:5005 \
