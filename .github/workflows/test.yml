@@ -6,6 +6,9 @@ on:
 defaults:
   run:
     shell: bash
+concurrency:    # 자동 취소
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
