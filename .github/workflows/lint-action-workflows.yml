@@ -1,0 +1,20 @@
+name: Lint GitHub Actions Workflows
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/*.ya?ml"
+defaults:
+  run:
+    shell: bash
+concurrency:    # 자동 취소
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5    # 타임 아웃
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        run: |
+          docker run --rm -v "$(pwd):$(pwd)" -w "$(pwd)" rhysd/actionlint:latest -shellcheck=disable=SC2087

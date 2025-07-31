@@ -1,0 +1,119 @@
+name: CICD
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'src/main/java/**/*.java'
+defaults:
+  run:
+    shell: bash
+env:
+  OCIR_USERNAME: ${{ vars.OCIR_NAMESPACE }}/${{ vars.OCI_USERNAME }}
+  OCIR_NAMESPACE: ${{ vars.OCIR_NAMESPACE }}
+  REGISTRY: ap-chuncheon-1.ocir.io
+  IMAGE_NAME: schedule
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.31
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_DATABASE: test_db
+          MYSQL_ROOT_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run tests
+        run:  chmod +x gradlew && ./gradlew test --no-daemon
+        env:
+          DB_USERNAME: root
+          DB_PASSWORD: root
+      - name: Build
+        run: ./gradlew build -x test --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schedule-sharing-jar
+          path: build/libs/schedule-sharing-service-0.0.1-SNAPSHOT.jar
+          retention-days: 7
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: schedule-sharing-jar
+          path: build/libs
+      - name: Login to OCIR   # 컨테이너 레지스트리 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.OCIR_USERNAME }}
+          password: ${{ secrets.OCI_TOKEN }}
+      - name: Set up Docker Buildx    # buildx 설정
+        uses: docker/setup-buildx-action@v3
+      - name: Docker meta   # 컨테이너 이미지의 메타데이터 생성
+        uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          tags: type=raw,value=dev
+      - name: Build and push    # 컨테이너 이미지 빌드와 푸시
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    env:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+    steps:
+      - name: Set up SSH key
+        run: |
+          mkdir -p "$HOME/.ssh"
+          echo "${SSH_KEY}" >> "$HOME/.ssh/ssh-key.key"
+          chmod 600 "$HOME/.ssh/ssh-key.key"
+      - name: Deploy to OCI via SSH
+        run: |
+          ssh -i "$HOME/.ssh/ssh-key.key" -o StrictHostKeyChecking=no deploy@"${HOST}" << EOF
+            docker login "${REGISTRY}" -u "${OCIR_USERNAME}" -p "${OCI_TOKEN}"
+            docker tag "${IMAGE}:dev" "${IMAGE}:backup" || true
+            docker pull "${IMAGE}:dev"
+            docker rm -f "${IMAGE_NAME}" || true
+            docker rmi "${IMAGE}:backup" || true
+            docker run -d -p 8080:8080 -p 5005:5005 \
+            -e DB_URL="${DB_URL}" \
+            -e DB_NAME="${DB_NAME}" \
+            -e DB_USERNAME="${DB_USERNAME}" \
+            -e DB_PASSWORD="${DB_PASSWORD}" \
+            --name "${IMAGE_NAME}" "${IMAGE}:dev"
+          EOF
+        env:
+          HOST: ${{ secrets.HOST }}
+          OCI_TOKEN: ${{ secrets.OCI_TOKEN }}
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OCIR_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_NAME: ${{ vars.DB_NAME }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
