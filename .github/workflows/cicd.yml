@@ -1,5 +1,9 @@
 name: CICD
-on: workflow_dispatch
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'src/main/java/**/*.java'
 defaults:
   run:
     shell: bash
