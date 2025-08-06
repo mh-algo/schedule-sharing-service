@@ -1,6 +1,6 @@
 package com.minhyung.schedule.common.exception;
 
-import com.minhyung.schedule.common.ApiResponse;
+import com.minhyung.schedule.common.ApiResult;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +22,16 @@ import java.util.stream.Collectors;
 public class ApiExceptionHandler {
     // API 예외 처리
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
+    public ResponseEntity<ApiResult<Void>> handleApiException(ApiException e) {
         log.warn("ApiException: {}", e.getMessage());
         return ResponseEntity.status(e.getStatus())
-                .body(ApiResponse.error(e));
+                .body(ApiResult.error(e));
     }
 
     // @Valid 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleValidationException(MethodArgumentNotValidException e) {
+    public ApiResult<Void> handleValidationException(MethodArgumentNotValidException e) {
         String globalErrorMessage = e.getBindingResult().getGlobalErrors().stream()
                 .map(MessageSourceResolvable::getDefaultMessage)
                 .collect(Collectors.joining(", "));
@@ -42,7 +42,7 @@ public class ApiExceptionHandler {
 
         String errorMessage = mergeErrorMessage(globalErrorMessage, fieldErrorMessage);
         log.warn("MethodArgumentNotValidException: {}", errorMessage);
-        return ApiResponse.error(ValidationErrorCode.VALIDATION_EXCEPTION, errorMessage);
+        return ApiResult.error(ValidationErrorCode.VALIDATION_EXCEPTION, errorMessage);
     }
 
     private static String mergeErrorMessage(String globalErrorMessage, String fieldErrorMessage) {
@@ -57,12 +57,12 @@ public class ApiExceptionHandler {
     // @Validated 예외 처리
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleConstraintViolationException(ConstraintViolationException e) {
+    public ApiResult<Void> handleConstraintViolationException(ConstraintViolationException e) {
         String errorMessage = e.getConstraintViolations().stream()
                 .map(this::formatViolationMessage)
                 .collect(Collectors.joining(", "));
         log.warn("ConstraintViolationException: {}", errorMessage);
-        return ApiResponse.error(ValidationErrorCode.VALIDATION_EXCEPTION, errorMessage);
+        return ApiResult.error(ValidationErrorCode.VALIDATION_EXCEPTION, errorMessage);
     }
 
     private String formatViolationMessage(ConstraintViolation<?> violation) {
@@ -74,25 +74,25 @@ public class ApiExceptionHandler {
     // 필수 파라미터 누락
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiResponse<Void> handleMissingParams(MissingServletRequestParameterException e) {
+    public ApiResult<Void> handleMissingParams(MissingServletRequestParameterException e) {
         String errorMessage = String.format(ValidationErrorCode.MISSING_REQUIRED_PARAM.getMessage(), e.getParameterName());
         log.warn("MissingServletRequestParameterException: {}", errorMessage);
-        return ApiResponse.error(ValidationErrorCode.MISSING_REQUIRED_PARAM, errorMessage);
+        return ApiResult.error(ValidationErrorCode.MISSING_REQUIRED_PARAM, errorMessage);
     }
 
     // 무결성 제약조건 위반
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiResponse<Void> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
+    public ApiResult<Void> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
         log.error("SQLIntegrityConstraintViolationException: {}", e.getMessage(), e);
-        return ApiResponse.error(ServerErrorCode.DB_CONSTRAINT_VIOLATION);
+        return ApiResult.error(ServerErrorCode.DB_CONSTRAINT_VIOLATION);
     }
 
     // DB 에러
     @ExceptionHandler(SQLException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiResponse<Void> handleSQLException(SQLException e) {
+    public ApiResult<Void> handleSQLException(SQLException e) {
         log.error("SQLException: {}", e.getMessage(), e);
-        return ApiResponse.error(ServerErrorCode.DB_ERROR);
+        return ApiResult.error(ServerErrorCode.DB_ERROR);
     }
 }
