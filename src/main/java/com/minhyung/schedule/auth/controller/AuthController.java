@@ -5,6 +5,7 @@ import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.auth.service.SignupService;
 import com.minhyung.schedule.common.ApiPaths;
 import com.minhyung.schedule.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +19,9 @@ public class AuthController {
     private final SignupService signupService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody SignupRequest request) {   // TODO: 파라미터 검증 추가
+    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody @Valid SignupRequest request) {
         SignupResponse response = signupService.signup(request);
         return ResponseEntity.created(URI.create(ApiPaths.MEMBER + "/" + response.id()))
-                .body(ApiResponse.success("회원가입이 완료되었습니다."));
+                .body(ApiResponse.created("회원가입이 완료되었습니다."));
     }
 }
