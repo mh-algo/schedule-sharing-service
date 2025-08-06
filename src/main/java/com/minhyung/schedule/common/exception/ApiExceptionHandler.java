@@ -85,7 +85,7 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResult<Void> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
         log.error("SQLIntegrityConstraintViolationException: {}", e.getMessage(), e);
-        return ApiResult.error(ServerErrorCode.DB_CONSTRAINT_VIOLATION);
+        return ApiResult.error(ServerErrorCode.SERVER_ERROR);
     }
 
     // DB 에러
@@ -93,6 +93,6 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResult<Void> handleSQLException(SQLException e) {
         log.error("SQLException: {}", e.getMessage(), e);
-        return ApiResult.error(ServerErrorCode.DB_ERROR);
+        return ApiResult.error(ServerErrorCode.SERVER_ERROR);
     }
 }

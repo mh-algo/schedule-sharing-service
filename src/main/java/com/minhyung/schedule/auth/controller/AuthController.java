@@ -1,5 +1,6 @@
 package com.minhyung.schedule.auth.controller;
 
+import com.minhyung.schedule.auth.controller.docs.AuthApiDocs;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.auth.service.SignupService;
@@ -15,7 +16,7 @@ import java.net.URI;
 @RestController
 @RequestMapping(ApiPaths.AUTH)
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthApiDocs {
     private final SignupService signupService;
 
     @PostMapping("/signup")
