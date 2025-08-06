@@ -65,4 +65,8 @@ public class ApiResponse<T> {
     public static ApiResponse<Void> error(ErrorCode e) {
         return new ApiResponse<>(e.getStatus(), e.getCode(), e.getMessage());
     }
+
+    public static ApiResponse<Void> error(ErrorCode e, String message) {
+        return new ApiResponse<>(e.getStatus(), e.getCode(), message);
+    }
 }
