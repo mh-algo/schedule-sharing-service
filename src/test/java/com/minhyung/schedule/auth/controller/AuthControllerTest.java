@@ -184,4 +184,28 @@ class AuthControllerTest {
                 .andExpect(jsonPath("code").value(errorCode.getCode()))
                 .andExpect(jsonPath("message").value("password: 비밀번호는 8~20자 이상으로 영문, 숫자, 특수문자를 각각 1가지 이상 사용하여 조합해주세요."));
     }
+
+    @Test
+    void 비밀번호와_비밀번호_확인_불일치() throws Exception {
+        // given
+        String username = "test";
+        String password = "test123!";
+        String passwordConfirm = "test456!";
+        SignupRequest request = new SignupRequest(username, password, passwordConfirm);
+        String content = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post(SIGNUP_PATH)
+                .characterEncoding(StandardCharsets.UTF_8.name())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(content)
+        );
+
+        // then
+        ValidationErrorCode errorCode = ValidationErrorCode.VALIDATION_EXCEPTION;
+        resultActions.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(errorCode.getStatus().value()))
+                .andExpect(jsonPath("code").value(errorCode.getCode()))
+                .andExpect(jsonPath("message").value("비밀번호가 일치하지 않습니다."));
+    }
 }
