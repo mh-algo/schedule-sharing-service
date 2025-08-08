@@ -5,7 +5,8 @@ CREATE TABLE `users` (
     `created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
     `updated_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
     `deleted_at`	TIMESTAMP	NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY uk_username (`username`)
 );
 
 CREATE TABLE `groups` (
