@@ -46,10 +46,10 @@ public class ApiLoginFilter extends AbstractAuthenticationProcessingFilter {
                 UsernamePasswordAuthenticationToken authRequest = UsernamePasswordAuthenticationToken.unauthenticated(username, password);
                 this.setDetails(request, authRequest);
                 return this.getAuthenticationManager().authenticate(authRequest);
-            } catch (UnrecognizedPropertyException e) {
+            } catch (UnrecognizedPropertyException e) {     // 잘못된 json property
                 String propertyName = e.getPropertyName();
                 throw new InvalidJsonPropertyException(e.getMessage(), e, propertyName);
-            } catch (JsonProcessingException e) {
+            } catch (JsonProcessingException e) {       // 잘못된 요청 형식(json parsing 실패)
                 throw new InvalidJsonFormatException(e.getMessage(), e);
             } catch (IOException e) {
                 throw new AuthenticationServiceException(e.getMessage(), e);
