@@ -1,6 +1,7 @@
 package com.minhyung.schedule.auth.service;
 
 import com.minhyung.schedule.auth.domain.UserInfo;
+import com.minhyung.schedule.auth.domain.UserStatus;
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
@@ -10,6 +11,7 @@ import com.minhyung.schedule.common.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +19,13 @@ public class SignupService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public SignupResponse signup(SignupRequest request) {
         // password 암호화
         UserInfo userInfo = UserInfo.fromRaw(request.username(), request.password(), passwordEncoder);
 
         validateUniqueUsername(userInfo.getUsername());     // username unique 검증
-        UserEntity userEntity = UserEntity.of(userInfo.getUsername(), userInfo.getPassword());
+        UserEntity userEntity = UserEntity.of(userInfo.getUsername(), userInfo.getPassword(), UserStatus.ACTIVE);
         UserEntity savedUserEntity = userRepository.save(userEntity);
         return new SignupResponse(savedUserEntity.getId(), savedUserEntity.getUsername());
     }
