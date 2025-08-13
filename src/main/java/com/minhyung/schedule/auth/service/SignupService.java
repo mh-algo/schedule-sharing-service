@@ -25,7 +25,7 @@ public class SignupService {
         UserInfo userInfo = UserInfo.fromRaw(request.username(), request.password(), passwordEncoder);
 
         validateUniqueUsername(userInfo.getUsername());     // username unique 검증
-        UserEntity userEntity = UserEntity.of(userInfo.getUsername(), userInfo.getPassword(), UserStatus.ACTIVE);
+        UserEntity userEntity = UserEntity.createNew(userInfo.getUsername(), userInfo.getPassword());
         UserEntity savedUserEntity = userRepository.save(userEntity);
         return new SignupResponse(savedUserEntity.getId(), savedUserEntity.getUsername());
     }

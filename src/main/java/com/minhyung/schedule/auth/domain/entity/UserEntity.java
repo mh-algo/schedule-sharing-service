@@ -31,7 +31,7 @@ public class UserEntity extends TimeStamp {
         this.status = status;
     }
 
-    public static UserEntity of(String username, String password, UserStatus status) {
-        return new UserEntity(username, password, status);
+    public static UserEntity createNew(String username, String password) {
+        return new UserEntity(username, password, UserStatus.ACTIVE);
     }
 }
