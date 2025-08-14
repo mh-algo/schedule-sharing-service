@@ -3,9 +3,11 @@ package com.minhyung.schedule.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.ApiLoginFilter;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
 import com.minhyung.schedule.security.login.LoginUserDetailsService;
+import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
@@ -27,6 +30,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final JwtService jwtService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,6 +52,7 @@ public class SecurityConfig {
         ApiLoginFilter filter = new ApiLoginFilter(objectMapper);
         filter.setAuthenticationManager(getApiLoginAuthenticationManager());
         filter.setRequiresAuthenticationRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(ApiPaths.AUTH + "/login"));
+        filter.setAuthenticationSuccessHandler(getAuthenticationSuccessHandler());
         return filter;
     }
 
@@ -58,5 +63,11 @@ public class SecurityConfig {
     private AuthenticationProvider getLoginAuthenticationProvider() {
         LoginUserDetailsService userDetailsService = new LoginUserDetailsService(userService);
         return new LoginAuthenticationProvider(userDetailsService);
+    }
+
+    private AuthenticationSuccessHandler getAuthenticationSuccessHandler() {
+        LoginAuthenticationSuccessHandler handler = new LoginAuthenticationSuccessHandler(jwtService);
+        handler.setObjectMapper(objectMapper);
+        return handler;
     }
 }
