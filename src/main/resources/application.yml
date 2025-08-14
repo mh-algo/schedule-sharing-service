@@ -27,3 +27,12 @@ logging.level.org:
   hibernate:
     SQL: debug
     orm.jdbc.bind: trace
+
+jwt:
+  secret: ${JWT_SECRET}   # base64
+  access-token-ttl-ms: 3600000    # 1시간(60 * 60 * 1000)
+  refresh-token-ttl-ms: 604800000   # 7일(7 * 24 * 60 * 60 * 1000)
+  cleanup:
+    enabled: true
+    delay-ms: 3600000    # 1시간(60 * 60 * 1000)
+    initial-ms: 3600000    # 1시간(60 * 60 * 1000)
