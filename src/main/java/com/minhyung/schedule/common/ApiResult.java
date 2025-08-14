@@ -7,7 +7,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class ApiResult<T> {
+public final class ApiResult<T> {
     private final int status;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String code;
