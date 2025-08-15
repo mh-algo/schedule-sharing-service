@@ -3,6 +3,7 @@ package com.minhyung.schedule.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.security.configurer.ApiLoginConfigurer;
 import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.ApiLoginFilter;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
@@ -21,10 +22,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @RequiredArgsConstructor
 @EnableWebSecurity
@@ -36,6 +33,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        AuthenticationManager authenticationManager = getApiLoginAuthenticationManager();
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -43,20 +42,17 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(createApiLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+                .with(new ApiLoginConfigurer(objectMapper), config -> config
+                        .authenticationManager(authenticationManager)
+                        .loginProcessingUrl(ApiPaths.AUTH + "/login")
+                        .successHandler(new LoginAuthenticationSuccessHandler(jwtService))
+                        .failureHandler(new LoginAuthenticationFailureHandler())
+                )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers(ApiPaths.AUTH + "/login").permitAll()
                         .anyRequest().permitAll());     // TODO: 나중에 인증 구현 후 수정
 
         return http.build();
-    }
-
-    private Filter createApiLoginFilter() {
-        ApiLoginFilter filter = new ApiLoginFilter(objectMapper);
-        filter.setAuthenticationManager(getApiLoginAuthenticationManager());
-        filter.setRequiresAuthenticationRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(ApiPaths.AUTH + "/login"));
-        filter.setAuthenticationSuccessHandler(getAuthenticationSuccessHandler());
-        filter.setAuthenticationFailureHandler(getAuthenticationFailureHandler());
-        return filter;
     }
 
     private AuthenticationManager getApiLoginAuthenticationManager() {
@@ -66,17 +62,5 @@ public class SecurityConfig {
     private AuthenticationProvider getLoginAuthenticationProvider() {
         LoginUserDetailsService userDetailsService = new LoginUserDetailsService(userService);
         return new LoginAuthenticationProvider(userDetailsService);
-    }
-
-    private AuthenticationSuccessHandler getAuthenticationSuccessHandler() {
-        LoginAuthenticationSuccessHandler handler = new LoginAuthenticationSuccessHandler(jwtService);
-        handler.setObjectMapper(objectMapper);
-        return handler;
-    }
-
-    private AuthenticationFailureHandler getAuthenticationFailureHandler() {
-        LoginAuthenticationFailureHandler handler = new LoginAuthenticationFailureHandler();
-        handler.setObjectMapper(objectMapper);
-        return handler;
     }
 }
