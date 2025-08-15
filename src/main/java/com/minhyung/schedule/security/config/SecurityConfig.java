@@ -7,6 +7,7 @@ import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.ApiLoginFilter;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
 import com.minhyung.schedule.security.login.LoginUserDetailsService;
+import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -53,6 +55,7 @@ public class SecurityConfig {
         filter.setAuthenticationManager(getApiLoginAuthenticationManager());
         filter.setRequiresAuthenticationRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(ApiPaths.AUTH + "/login"));
         filter.setAuthenticationSuccessHandler(getAuthenticationSuccessHandler());
+        filter.setAuthenticationFailureHandler(getAuthenticationFailureHandler());
         return filter;
     }
 
@@ -67,6 +70,12 @@ public class SecurityConfig {
 
     private AuthenticationSuccessHandler getAuthenticationSuccessHandler() {
         LoginAuthenticationSuccessHandler handler = new LoginAuthenticationSuccessHandler(jwtService);
+        handler.setObjectMapper(objectMapper);
+        return handler;
+    }
+
+    private AuthenticationFailureHandler getAuthenticationFailureHandler() {
+        LoginAuthenticationFailureHandler handler = new LoginAuthenticationFailureHandler();
         handler.setObjectMapper(objectMapper);
         return handler;
     }
