@@ -2,10 +2,9 @@ package com.minhyung.schedule.security.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
-import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.security.configurer.ApiLoginConfigurer;
 import com.minhyung.schedule.security.jwt.service.JwtService;
-import com.minhyung.schedule.security.login.ApiLoginFilter;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
 import com.minhyung.schedule.security.login.LoginUserDetailsService;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
@@ -44,12 +43,12 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .with(new ApiLoginConfigurer(objectMapper), config -> config
                         .authenticationManager(authenticationManager)
-                        .loginProcessingUrl(ApiPaths.AUTH + "/login")
+                        .loginProcessingUrl(ApiPathsUtils.auth("login"))
                         .successHandler(new LoginAuthenticationSuccessHandler(jwtService))
                         .failureHandler(new LoginAuthenticationFailureHandler())
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(ApiPaths.AUTH + "/login").permitAll()
+                        .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
                         .anyRequest().permitAll());     // TODO: 나중에 인증 구현 후 수정
 
         return http.build();
