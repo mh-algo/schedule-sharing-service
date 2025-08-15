@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.minhyung.schedule.security.login.exception.InvalidJsonFormatException;
 import com.minhyung.schedule.security.login.exception.InvalidJsonPropertyException;
-import com.minhyung.schedule.security.login.exception.MethodNotAllowedException;
+import com.minhyung.schedule.security.exception.MethodNotAllowedException;
 import com.minhyung.schedule.security.login.dto.LoginRequest;
 import io.micrometer.common.lang.Nullable;
 import jakarta.servlet.http.HttpServletRequest;

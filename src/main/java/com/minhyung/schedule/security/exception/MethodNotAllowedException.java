@@ -1,4 +1,4 @@
-package com.minhyung.schedule.security.login.exception;
+package com.minhyung.schedule.security.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
