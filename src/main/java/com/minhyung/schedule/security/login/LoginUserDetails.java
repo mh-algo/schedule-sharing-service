@@ -37,7 +37,7 @@ public class LoginUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return userInfo.status().isActive();
+        return !isSuspended();      // 미인증 상태는 로그인 가능
     }
 
     public boolean isSuspended() {
