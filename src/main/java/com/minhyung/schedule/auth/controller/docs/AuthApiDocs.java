@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Auth", description = "회원 가입, 로그인, 로그아웃 등 인증 관련 API")
 public interface AuthApiDocs {
@@ -34,4 +36,40 @@ public interface AuthApiDocs {
             @ApiResponse(responseCode = "500", description = "SERVER_001", content = @Content)
     })
     ResponseEntity<ApiResult<Void>> signup(SignupRequest request);
+
+    @Operation(summary = "로그인", description = "사용자로부터 아이디와 비밀번호를 입력받아 로그인합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그인 완료",
+                    headers = {
+                            @Header(name = "Authorization", description = "Access Token",
+                                    schema = @Schema(type = "string", example = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiO...")),
+                            @Header(name = "Refresh-Token", description = "Refresh Token",
+                                    schema = @Schema(type = "string", example = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiO..."))
+                    },
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schemaProperties = {
+                                    @SchemaProperty(name= "status", schema = @Schema(type = "integer", example = "200")),
+                                    @SchemaProperty(name= "message", schema = @Schema(type = "string", example = "로그인 성공"))
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", description = "LOGIN_001", content = @Content),
+            @ApiResponse(responseCode = "403", description = "LOGIN_002", content = @Content),
+            @ApiResponse(responseCode = "500", description = "LOGIN_003", content = @Content),
+            @ApiResponse(responseCode = "405", description = "AUTH_001", content = @Content),
+            @ApiResponse(responseCode = "400", description = "AUTH_002", content = @Content),
+            @ApiResponse(responseCode = "400", description = "AUTH_003", content = @Content)
+    })
+    @PostMapping("/login")
+    default void login(@RequestBody LoginRequest request) {
+    }
+
+    record LoginRequest(
+            @Schema(description = "아이디", example = "username", requiredMode = Schema.RequiredMode.REQUIRED)
+            String username,
+            @Schema(description = "비밀번호", example = "password123!", requiredMode = Schema.RequiredMode.REQUIRED)
+            String password
+    ) {
+    }
 }
