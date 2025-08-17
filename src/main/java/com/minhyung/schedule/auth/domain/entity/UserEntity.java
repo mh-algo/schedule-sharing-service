@@ -25,7 +25,7 @@ public class UserEntity extends TimeStamp {
     @Convert(converter = UserStatusConverter.class)
     private UserStatus status;
 
-    public UserEntity(String username, String password, UserStatus status) {
+    private UserEntity(String username, String password, UserStatus status) {
         this.username = username;
         this.password = password;
         this.status = status;
