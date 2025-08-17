@@ -5,6 +5,7 @@ import com.minhyung.schedule.security.login.LoginUserDetails;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -14,6 +15,8 @@ public final class LoginUserDetailsBuilder {
     private String password = "{bcrypt}$2a$10$9tJM5zUrYimpTepZ5WraUuCvVxZZXMc2M4J92fTqMaECAnZRNkRGa";   // password123!
     private UserStatus status = UserStatus.ACTIVE;
     private List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
+    private LoginUserDetailsBuilder() {}
 
     public static LoginUserDetailsBuilder userDetails() {
         return new LoginUserDetailsBuilder();
@@ -29,7 +32,12 @@ public final class LoginUserDetailsBuilder {
         return this;
     }
 
-    public LoginUserDetailsBuilder withPassword(String password) {
+    public LoginUserDetailsBuilder withPassword(String password, PasswordEncoder encoder) {
+        this.password = encoder.encode(password);
+        return this;
+    }
+
+    public LoginUserDetailsBuilder withEncodedPassword(String password) {
         this.password = password;
         return this;
     }

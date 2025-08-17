@@ -46,7 +46,7 @@ class AuthControllerTest {
     }
 
     private static final String SIGNUP_PATH = ApiPaths.AUTH + "/signup";
-    private ObjectMapper objectMapper = TestObjectMapper.getInstance();
+    private final ObjectMapper objectMapper = TestObjectMapper.getInstance();
 
     private static SignupRequest createSignupRequest(String username, String password) {
         return new SignupRequest(username, password, password);

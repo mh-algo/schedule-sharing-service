@@ -9,6 +9,8 @@ public final class UserInfoDtoBuilder {
     private String password = "{bcrypt}$2a$10$9tJM5zUrYimpTepZ5WraUuCvVxZZXMc2M4J92fTqMaECAnZRNkRGa";   // password123!
     private UserStatus status = UserStatus.ACTIVE;
 
+    private UserInfoDtoBuilder() {}
+
     public static UserInfoDtoBuilder user() {
         return new UserInfoDtoBuilder();
     }
