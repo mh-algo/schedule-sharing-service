@@ -5,6 +5,7 @@ import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.auth.service.SignupService;
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.common.exception.ApiExceptionHandler;
 import com.minhyung.schedule.common.exception.ValidationErrorCode;
 import com.minhyung.schedule.testsupport.TestObjectMapper;
@@ -71,7 +72,7 @@ class AuthControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(header().string("Location", ApiPaths.MEMBER + "/" + response.id()))
+                .andExpect(header().string("Location", ApiPathsUtils.auth(response.id())))
                 .andExpect(jsonPath("status").value(201))
                 .andExpect(jsonPath("message").value("회원가입이 완료되었습니다."));
     }
