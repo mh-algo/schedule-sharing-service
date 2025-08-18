@@ -11,7 +11,7 @@ import java.util.Map;
 public final class TestToken {
     private static final Clock DEFAULT_CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
     private static final String DEFAULT_SUB = "1";
-    private static final String SECRET_KEY = "xkBS7dHQasgwoDllsgSMbIjfVSoY2f3IGyXvtmUor5k=";
+    public static final String SECRET_KEY = "xkBS7dHQasgwoDllsgSMbIjfVSoY2f3IGyXvtmUor5k=";
 
     public static String access() {
         return access(DEFAULT_SUB, DEFAULT_CLOCK);
