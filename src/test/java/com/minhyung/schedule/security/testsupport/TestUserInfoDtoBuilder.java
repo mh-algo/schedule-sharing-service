@@ -3,34 +3,34 @@ package com.minhyung.schedule.security.testsupport;
 import com.minhyung.schedule.auth.domain.UserStatus;
 import com.minhyung.schedule.auth.dto.UserInfoDto;
 
-public final class UserInfoDtoBuilder {
+public final class TestUserInfoDtoBuilder {
     private Long id = 1L;
     private String username = "username";
     private String password = "{bcrypt}$2a$10$9tJM5zUrYimpTepZ5WraUuCvVxZZXMc2M4J92fTqMaECAnZRNkRGa";   // password123!
     private UserStatus status = UserStatus.ACTIVE;
 
-    private UserInfoDtoBuilder() {}
+    private TestUserInfoDtoBuilder() {}
 
-    public static UserInfoDtoBuilder user() {
-        return new UserInfoDtoBuilder();
+    public static TestUserInfoDtoBuilder user() {
+        return new TestUserInfoDtoBuilder();
     }
 
-    public UserInfoDtoBuilder withId(Long id) {
+    public TestUserInfoDtoBuilder withId(Long id) {
         this.id = id;
         return this;
     }
 
-    public UserInfoDtoBuilder withUsername(String username) {
+    public TestUserInfoDtoBuilder withUsername(String username) {
         this.username = username;
         return this;
     }
 
-    public UserInfoDtoBuilder withPassword(String password) {
+    public TestUserInfoDtoBuilder withPassword(String password) {
         this.password = password;
         return this;
     }
 
-    public UserInfoDtoBuilder withStatus(UserStatus status) {
+    public TestUserInfoDtoBuilder withStatus(UserStatus status) {
         this.status = status;
         return this;
     }

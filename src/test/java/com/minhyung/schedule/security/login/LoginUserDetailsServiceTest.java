@@ -4,7 +4,7 @@ import com.minhyung.schedule.auth.dto.UserInfoDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
-import com.minhyung.schedule.security.testsupport.UserInfoDtoBuilder;
+import com.minhyung.schedule.security.testsupport.TestUserInfoDtoBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,8 @@ class LoginUserDetailsServiceTest {
     void 사용자_정보_조회_후_UserDetails_반환() {
         // given
         String username = "username";
-        UserInfoDto userInfoDto = UserInfoDtoBuilder.user().build();
+        UserInfoDto userInfoDto = TestUserInfoDtoBuilder.user().build();
+
         when(userService.getUserInfo(username)).thenReturn(userInfoDto);
 
         // when
@@ -50,8 +51,9 @@ class LoginUserDetailsServiceTest {
         // given
         String username = "username";
 
-        // when
         when(userService.getUserInfo(username)).thenThrow(new UserNotFoundException("User not found: " + username));
+
+        // when
         ThrowingCallable action = () -> loginUserDetailsService.loadUserByUsername(username);
 
         // when

@@ -3,7 +3,7 @@ package com.minhyung.schedule.security.login;
 import com.minhyung.schedule.auth.domain.UserStatus;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
 import com.minhyung.schedule.security.principal.UserPrincipal;
-import com.minhyung.schedule.security.testsupport.LoginUserDetailsBuilder;
+import com.minhyung.schedule.security.testsupport.TestLoginUserDetailsBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +41,7 @@ class LoginAuthenticationProviderTest {
         String username = "username";
         String password = "password123!";
         UsernamePasswordAuthenticationToken unauthenticated = createUnauthenticated(username, password);
-        LoginUserDetails userDetails = LoginUserDetailsBuilder.userDetails().build();
+        LoginUserDetails userDetails = TestLoginUserDetailsBuilder.userDetails().build();
 
         when(loginUserDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
 
@@ -100,7 +100,7 @@ class LoginAuthenticationProviderTest {
         String username = "username";
         String password = "password123!";
         UsernamePasswordAuthenticationToken unauthenticated = createUnauthenticated(username, password);
-        LoginUserDetails userDetails = LoginUserDetailsBuilder.userDetails()
+        LoginUserDetails userDetails = TestLoginUserDetailsBuilder.userDetails()
                 .withStatus(UserStatus.SUSPENDED)
                 .build();
 

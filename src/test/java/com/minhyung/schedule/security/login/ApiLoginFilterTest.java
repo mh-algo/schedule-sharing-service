@@ -9,7 +9,7 @@ import com.minhyung.schedule.security.login.exception.InvalidJsonPropertyExcepti
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
 import com.minhyung.schedule.security.principal.UserPrincipal;
-import com.minhyung.schedule.security.testsupport.LoginUserDetailsBuilder;
+import com.minhyung.schedule.security.testsupport.TestLoginUserDetailsBuilder;
 import com.minhyung.schedule.testsupport.TestObjectMapper;
 import com.minhyung.schedule.testsupport.TestRequestBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -46,8 +46,7 @@ class ApiLoginFilterTest {
     @Mock
     private LoginAuthenticationFailureHandler failureHandler;
 
-    private final ObjectMapper objectMapper = TestObjectMapper.getInstance();
-
+    private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
     private static final String REQUEST_URI = ApiPathsUtils.auth("login");
 
     @BeforeEach
@@ -83,7 +82,7 @@ class ApiLoginFilterTest {
     }
 
     private UsernamePasswordAuthenticationToken createAuthenticatedToken(UsernamePasswordAuthenticationToken unauthenticated) {
-        LoginUserDetails userDetails = LoginUserDetailsBuilder.userDetails().build();
+        LoginUserDetails userDetails = TestLoginUserDetailsBuilder.userDetails().build();
         return UsernamePasswordAuthenticationToken.authenticated(
                 toUserPrincipal(userDetails), unauthenticated.getCredentials(),
                 new NullAuthoritiesMapper().mapAuthorities(userDetails.getAuthorities()));
