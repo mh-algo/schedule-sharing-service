@@ -1,5 +1,6 @@
 package com.minhyung.schedule.security.testsupport;
 
+import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.JwtUtils;
 import com.minhyung.schedule.testsupport.TestClock;
 
@@ -45,5 +46,25 @@ public final class TestToken {
     public static String refresh(String sub, Clock clock) {
         Instant now = Instant.now(clock);
         return JwtUtils.encode(sub, SECRET_KEY, now, now.plus(Duration.ofDays(7)));
+    }
+
+    public static JwtToken tokens() {
+        return tokens(access(), refresh());
+    }
+
+    public static JwtToken tokens(String sub) {
+        return tokens(access(sub), refresh(sub));
+    }
+
+    public static JwtToken tokens(Clock clock) {
+        return tokens(access(clock), refresh(clock));
+    }
+
+    public static JwtToken tokens(String sub, Clock clock) {
+        return tokens(access(sub, clock), refresh(sub, clock));
+    }
+
+    public static JwtToken tokens(String access, String refresh) {
+        return JwtToken.ofRaw(access, refresh);
     }
 }
