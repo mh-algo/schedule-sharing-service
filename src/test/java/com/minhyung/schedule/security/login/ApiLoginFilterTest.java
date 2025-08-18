@@ -3,13 +3,11 @@ package com.minhyung.schedule.security.login;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.security.exception.MethodNotAllowedException;
-import com.minhyung.schedule.security.login.dto.LoginUserInfo;
 import com.minhyung.schedule.security.login.exception.InvalidJsonFormatException;
 import com.minhyung.schedule.security.login.exception.InvalidJsonPropertyException;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
-import com.minhyung.schedule.security.principal.UserPrincipal;
-import com.minhyung.schedule.security.testsupport.TestLoginUserDetailsBuilder;
+import com.minhyung.schedule.security.testsupport.TestLoginAuthenticationToken;
 import com.minhyung.schedule.testsupport.TestObjectMapper;
 import com.minhyung.schedule.testsupport.TestRequestBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -24,7 +22,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
@@ -68,9 +65,9 @@ class ApiLoginFilterTest {
         MockHttpServletRequest request = createRequest(username, password);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        UsernamePasswordAuthenticationToken unauthenticated = UsernamePasswordAuthenticationToken.unauthenticated(username, password);
+        UsernamePasswordAuthenticationToken unauthenticated = TestLoginAuthenticationToken.unauthenticated(username, password);
         unauthenticated.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        UsernamePasswordAuthenticationToken authenticated = createAuthenticatedToken(unauthenticated);
+        UsernamePasswordAuthenticationToken authenticated = TestLoginAuthenticationToken.authenticated();
 
         when(providerManager.authenticate(unauthenticated)).thenReturn(authenticated);
 
@@ -79,19 +76,6 @@ class ApiLoginFilterTest {
 
         // then
         assertThat(authentication).isInstanceOf(UsernamePasswordAuthenticationToken.class);
-    }
-
-    private UsernamePasswordAuthenticationToken createAuthenticatedToken(UsernamePasswordAuthenticationToken unauthenticated) {
-        LoginUserDetails userDetails = TestLoginUserDetailsBuilder.userDetails().build();
-        return UsernamePasswordAuthenticationToken.authenticated(
-                toUserPrincipal(userDetails), unauthenticated.getCredentials(),
-                new NullAuthoritiesMapper().mapAuthorities(userDetails.getAuthorities()));
-    }
-
-    private UserPrincipal toUserPrincipal(LoginUserDetails userDetails) {
-        LoginUserInfo account = userDetails.getUserInfo();
-        boolean verified = !userDetails.isUnverified();
-        return new UserPrincipal(account.id(), verified);
     }
 
     @Test

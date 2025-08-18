@@ -3,6 +3,7 @@ package com.minhyung.schedule.security.login;
 import com.minhyung.schedule.auth.domain.UserStatus;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
 import com.minhyung.schedule.security.principal.UserPrincipal;
+import com.minhyung.schedule.security.testsupport.TestLoginAuthenticationToken;
 import com.minhyung.schedule.security.testsupport.TestLoginUserDetailsBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class LoginAuthenticationProviderTest {
     private LoginUserDetailsService loginUserDetailsService;
 
     private static UsernamePasswordAuthenticationToken createUnauthenticated(String username, String password) {
-        return UsernamePasswordAuthenticationToken.unauthenticated(username, password);
+        return TestLoginAuthenticationToken.unauthenticated(username, password);
     }
 
     @Test
