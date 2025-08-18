@@ -5,6 +5,7 @@ import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import com.minhyung.schedule.security.testsupport.TestToken;
 import com.minhyung.schedule.testsupport.TestClock;
+import com.minhyung.schedule.testsupport.TestPrincipalBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +27,7 @@ class JwtServiceTest {
     @Mock
     private TokenStore tokenStore;
 
-    private final Clock clock = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Clock clock = TestClock.fixedAt("2025-08-01T00:00:00Z");
 
     @BeforeEach
     void setUp() {
@@ -36,7 +37,7 @@ class JwtServiceTest {
     @Test
     void jwt_token_생성() {
         // given
-        UserPrincipal principal = createPrincipal();
+        UserPrincipal principal = TestPrincipalBuilder.principal().build();
         String accessToken = TestToken.access(clock);
         String refreshToken = TestToken.refresh(clock);
 
@@ -50,9 +51,5 @@ class JwtServiceTest {
         assertThat(jwtToken).isNotNull();
         assertThat(jwtToken.getAccessToken()).isEqualTo(accessToken);
         assertThat(jwtToken.getRefreshToken()).isEqualTo(refreshToken);
-    }
-
-    private UserPrincipal createPrincipal() {
-        return new UserPrincipal(1L, true);
     }
 }
