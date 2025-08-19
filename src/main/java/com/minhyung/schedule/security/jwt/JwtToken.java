@@ -5,7 +5,7 @@ import org.springframework.lang.NonNull;
 
 @EqualsAndHashCode
 public class JwtToken {
-    private static final String PREFIX = "Bearer ";
+    public static final String PREFIX = "Bearer ";
 
     @NonNull
     private final String access;
