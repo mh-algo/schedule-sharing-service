@@ -5,6 +5,7 @@ import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.auth.service.SignupService;
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.common.ApiResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class AuthController implements AuthApiDocs {
     @PostMapping("/signup")
     public ResponseEntity<ApiResult<Void>> signup(@RequestBody @Valid SignupRequest request) {
         SignupResponse response = signupService.signup(request);
-        return ResponseEntity.created(URI.create(ApiPaths.MEMBER + "/" + response.id()))
+        return ResponseEntity.created(URI.create(ApiPathsUtils.auth(response.id())))
                 .body(ApiResult.created("회원가입이 완료되었습니다."));
     }
 }

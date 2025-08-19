@@ -74,7 +74,7 @@ class SignupServiceTest {
     }
 
     private static UserEntity createUserEntity(Long id, String username, String password) {
-        UserEntity userEntity = new UserEntity(username, password);
+        UserEntity userEntity = UserEntity.createNew(username, password);
         ReflectionTestUtils.setField(userEntity, "id", id);
         return userEntity;
     }

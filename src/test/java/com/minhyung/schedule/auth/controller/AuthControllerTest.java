@@ -5,6 +5,7 @@ import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.auth.service.SignupService;
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.common.exception.ApiExceptionHandler;
 import com.minhyung.schedule.common.exception.ValidationErrorCode;
 import com.minhyung.schedule.testsupport.TestObjectMapper;
@@ -44,8 +45,8 @@ class AuthControllerTest {
                 .build();
     }
 
-    private static final String SIGNUP_PATH = ApiPaths.AUTH + "/signup";
-    private ObjectMapper objectMapper = TestObjectMapper.getInstance();
+    private static final String SIGNUP_PATH = ApiPathsUtils.auth("/signup");
+    private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
 
     private static SignupRequest createSignupRequest(String username, String password) {
         return new SignupRequest(username, password, password);
@@ -71,7 +72,7 @@ class AuthControllerTest {
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(header().string("Location", ApiPaths.MEMBER + "/" + response.id()))
+                .andExpect(header().string("Location", ApiPathsUtils.auth(response.id())))
                 .andExpect(jsonPath("status").value(201))
                 .andExpect(jsonPath("message").value("회원가입이 완료되었습니다."));
     }

@@ -1,5 +1,7 @@
 package com.minhyung.schedule.auth.domain.entity;
 
+import com.minhyung.schedule.auth.domain.UserStatus;
+import com.minhyung.schedule.auth.repository.converter.UserStatusConverter;
 import com.minhyung.schedule.common.entity.TimeStamp;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,12 +22,16 @@ public class UserEntity extends TimeStamp {
 
     private String password;
 
-    public UserEntity(String username, String password) {
+    @Convert(converter = UserStatusConverter.class)
+    private UserStatus status;
+
+    private UserEntity(String username, String password, UserStatus status) {
         this.username = username;
         this.password = password;
+        this.status = status;
     }
 
-    public static UserEntity of(String username, String password) {
-        return new UserEntity(username, password);
+    public static UserEntity createNew(String username, String password) {
+        return new UserEntity(username, password, UserStatus.ACTIVE);
     }
 }
