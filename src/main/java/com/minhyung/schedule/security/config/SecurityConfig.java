@@ -3,6 +3,8 @@ package com.minhyung.schedule.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPathsUtils;
+import com.minhyung.schedule.security.auth.JwtAuthenticationFilter;
+import com.minhyung.schedule.security.auth.JwtAuthenticationProvider;
 import com.minhyung.schedule.security.configurer.ApiLoginConfigurer;
 import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
@@ -21,6 +23,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor
 @EnableWebSecurity
@@ -32,7 +35,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        AuthenticationManager authenticationManager = getApiLoginAuthenticationManager();
+        AuthenticationManager authenticationManager = getAuthenticationManager();
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -41,6 +44,7 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(getJwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .with(new ApiLoginConfigurer(objectMapper), config -> config
                         .authenticationManager(authenticationManager)
                         .loginProcessingUrl(ApiPathsUtils.auth("login"))
@@ -49,17 +53,29 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
-                        .anyRequest().permitAll());     // TODO: 나중에 인증 구현 후 수정
+                        .anyRequest().authenticated());
 
         return http.build();
     }
 
-    private AuthenticationManager getApiLoginAuthenticationManager() {
-        return new ProviderManager(getLoginAuthenticationProvider());
+    private AuthenticationManager getAuthenticationManager() {
+        return new ProviderManager(getJwtAuthenticationProvider(), getLoginAuthenticationProvider());
     }
 
     private AuthenticationProvider getLoginAuthenticationProvider() {
         LoginUserDetailsService userDetailsService = new LoginUserDetailsService(userService);
         return new LoginAuthenticationProvider(userDetailsService);
+    }
+
+    private AuthenticationProvider getJwtAuthenticationProvider() {
+        return new JwtAuthenticationProvider(jwtService);
+    }
+
+    private Filter getJwtAuthenticationFilter() {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
+        filter.setAuthenticationManager(getAuthenticationManager());
+        filter.setAuthenticationSuccessHandler(null);
+        filter.setAuthenticationFailureHandler(null);
+        return filter;
     }
 }

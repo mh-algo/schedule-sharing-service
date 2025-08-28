@@ -3,6 +3,8 @@ package com.minhyung.schedule.security.jwt.service;
 import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -31,5 +33,9 @@ public class JwtService {
         Instant expiresAt = Instant.now(clock).plusMillis(refreshTokenTTLMs);
         tokenStore.save(sub, refreshToken, expiresAt);      // 생성된 refreshToken 저장
         return JwtToken.ofRaw(accessToken, refreshToken);
+    }
+
+    public Claims parseClaims(String token) throws IllegalArgumentException, JwtException {
+        return jwtProvider.parseClaims(token);
     }
 }

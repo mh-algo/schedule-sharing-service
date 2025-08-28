@@ -53,4 +53,12 @@ public class JwtToken {
                 ? token.substring(PREFIX.length())
                 : token;
     }
+
+    public boolean isEmpty() {
+        return access.isEmpty() && refresh.isEmpty();
+    }
+
+    public boolean hasBearerPrefix() {
+        return access.startsWith(PREFIX) && refresh.startsWith(PREFIX);
+    }
 }
