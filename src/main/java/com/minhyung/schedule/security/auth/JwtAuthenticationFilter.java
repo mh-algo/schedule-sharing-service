@@ -1,16 +1,22 @@
 package com.minhyung.schedule.security.auth;
 
+import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.security.auth.exception.AccessTokenExpiredException;
 import com.minhyung.schedule.security.auth.exception.InvalidJwtException;
+import com.minhyung.schedule.security.auth.exception.TokenExpiredException;
 import com.minhyung.schedule.security.jwt.JwtHeader;
 import com.minhyung.schedule.security.jwt.JwtToken;
+import com.minhyung.schedule.security.jwt.exception.DisabledAccountException;
 import com.minhyung.schedule.security.jwt.service.JwtService;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
@@ -84,6 +90,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             JwtToken reissued = jwtService.reissueJwtToken(token.getRefreshToken());    // token 재발급
             return attemptAuthentication(reissued);
+        } catch (DisabledAccountException e) {
+            throw new DisabledException("Disabled");
+        } catch (UserNotFoundException e) {
+            throw new BadCredentialsException("Bad credentials");
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException("Expired JWT token");
         } catch (JwtException | IllegalArgumentException e) {
             throw new InvalidJwtException(e.getMessage(), e);
         }

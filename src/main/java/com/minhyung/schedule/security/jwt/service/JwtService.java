@@ -5,12 +5,12 @@ import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.dto.IssuedToken;
 import com.minhyung.schedule.security.jwt.dto.TokenData;
+import com.minhyung.schedule.security.jwt.exception.DisabledAccountException;
 import com.minhyung.schedule.security.jwt.repository.TokenBlackList;
 import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
@@ -46,7 +46,7 @@ public class JwtService {
         saveBlackList(sub, refreshToken, "reissue");        // 기존 refreshToken 블랙리스트 등록
         UserStatusDto userStatus = userService.getUserStatusDto(Long.valueOf(sub));     // 사용자 정보 조회
         if (userStatus.status().isSuspended()) {    // 계정이 정지된 경우
-            throw new DisabledException("Account is disabled");
+            throw new DisabledAccountException("Account is disabled");
         }
         return issueJwtToken(toPrincipal(userStatus));
     }
