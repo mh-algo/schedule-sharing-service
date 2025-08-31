@@ -1,6 +1,7 @@
 package com.minhyung.schedule.security.jwt.service;
 
 import com.minhyung.schedule.security.jwt.JwtToken;
+import com.minhyung.schedule.security.jwt.dto.IssuedToken;
 import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import com.minhyung.schedule.security.testsupport.TestToken;
@@ -13,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -27,22 +30,24 @@ class JwtServiceTest {
     @Mock
     private TokenStore tokenStore;
 
-    private static final Clock clock = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Clock CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Instant NOW = Instant.now(CLOCK);
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(jwtProvider, tokenStore, clock);
+        jwtService = new JwtService(jwtProvider, tokenStore, CLOCK);
     }
 
     @Test
     void jwt_token_생성() {
         // given
         UserPrincipal principal = TestPrincipalBuilder.principal().build();
-        String accessToken = TestToken.access(clock);
-        String refreshToken = TestToken.refresh(clock);
+        String sub = principal.id().toString();
+        String accessToken = TestToken.access(sub, CLOCK);
+        String refreshToken = TestToken.refresh(sub, CLOCK);
 
-        when(jwtProvider.generateAccessToken(principal)).thenReturn(accessToken);
-        when(jwtProvider.generateRefreshToken(principal)).thenReturn(refreshToken);
+        when(jwtProvider.issueAccess(principal, NOW)).thenReturn(new IssuedToken(sub, accessToken, NOW.plus(Duration.ofHours(1))));
+        when(jwtProvider.issueRefresh(principal, NOW)).thenReturn(new IssuedToken(sub, refreshToken,  NOW.plus(Duration.ofDays(7))));
 
         // when
         JwtToken jwtToken = jwtService.createJwtToken(principal);

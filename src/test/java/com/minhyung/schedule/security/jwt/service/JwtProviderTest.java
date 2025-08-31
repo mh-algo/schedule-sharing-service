@@ -1,6 +1,7 @@
 package com.minhyung.schedule.security.jwt.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minhyung.schedule.security.jwt.dto.IssuedToken;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import com.minhyung.schedule.security.testsupport.TestToken;
 import com.minhyung.schedule.testsupport.TestClock;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,12 +25,13 @@ class JwtProviderTest {
     private static final long REFRESH_TOKEN_TTL_MS = 604800000L;
     private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
     private static final Clock CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Instant NOW = Instant.now(CLOCK);
 
     private JwtProvider jwtProvider;
 
     @BeforeEach
     void setUp() {
-        jwtProvider = new JwtProvider(objectMapper, CLOCK);
+        jwtProvider = new JwtProvider(objectMapper);
         ReflectionTestUtils.setField(jwtProvider, "secretKey", SECRET_KEY);
         ReflectionTestUtils.setField(jwtProvider, "accessTokenTTLMs", ACCESS_TOKEN_TTL_MS);
         ReflectionTestUtils.setField(jwtProvider, "refreshTokenTTLMs", REFRESH_TOKEN_TTL_MS);
@@ -42,25 +45,33 @@ class JwtProviderTest {
     void access_token_생성() {
         // given
         UserPrincipal principal = createPrincipal();
+        String sub = principal.id().toString();
         String accessToken = TestToken.access(CLOCK);
+        Instant expiresAt = NOW.plusMillis(ACCESS_TOKEN_TTL_MS);
 
         // when
-        String result = jwtProvider.generateAccessToken(principal);
+        IssuedToken result = jwtProvider.issueAccess(principal, NOW);
 
         // then
-        assertThat(result).isEqualTo(accessToken);
+        assertThat(result.sub()).isEqualTo(sub);
+        assertThat(result.token()).isEqualTo(accessToken);
+        assertThat(result.expiresAt()).isEqualTo(expiresAt);
     }
 
     @Test
     void refresh_token_생성() {
         // given
         UserPrincipal principal = createPrincipal();
+        String sub = principal.id().toString();
         String refreshToken = TestToken.refresh(CLOCK);
+        Instant expiresAt = NOW.plusMillis(REFRESH_TOKEN_TTL_MS);
 
         // when
-        String result = jwtProvider.generateRefreshToken(principal);
+        IssuedToken result = jwtProvider.issueRefresh(principal, NOW);
 
         // then
-        assertThat(result).isEqualTo(refreshToken);
+        assertThat(result.sub()).isEqualTo(sub);
+        assertThat(result.token()).isEqualTo(refreshToken);
+        assertThat(result.expiresAt()).isEqualTo(expiresAt);
     }
 }
