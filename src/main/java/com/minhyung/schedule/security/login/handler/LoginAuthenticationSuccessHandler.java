@@ -32,7 +32,7 @@ public class LoginAuthenticationSuccessHandler implements AuthenticationSuccessH
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal userPrincipal) {
-            JwtToken jwtToken = jwtService.createJwtToken(userPrincipal);
+            JwtToken jwtToken = jwtService.issueJwtToken(userPrincipal);
             writeLoginSuccessResponse(response, jwtToken);
         } else {
             throw new InternalAuthenticationServiceException("Unexpected principal type");

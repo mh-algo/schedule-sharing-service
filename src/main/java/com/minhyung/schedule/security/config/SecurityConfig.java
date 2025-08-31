@@ -5,6 +5,7 @@ import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.security.auth.JwtAuthenticationFilter;
 import com.minhyung.schedule.security.auth.JwtAuthenticationProvider;
+import com.minhyung.schedule.security.auth.handler.JwtAuthenticationSuccessHandler;
 import com.minhyung.schedule.security.configurer.ApiLoginConfigurer;
 import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
@@ -72,9 +73,9 @@ public class SecurityConfig {
     }
 
     private Filter getJwtAuthenticationFilter() {
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService);
         filter.setAuthenticationManager(getAuthenticationManager());
-        filter.setAuthenticationSuccessHandler(null);
+        filter.setAuthenticationSuccessHandler(new JwtAuthenticationSuccessHandler());
         filter.setAuthenticationFailureHandler(null);
         return filter;
     }

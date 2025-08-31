@@ -27,13 +27,10 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        JwtToken token = (JwtToken) authentication.getCredentials();
-        if (!token.hasBearerPrefix()) {     // "Bearer "로 시작하지 않는 경우
-            throw new InvalidJwtException("Invalid JWT token");
-        }
         try {
+            JwtToken token = (JwtToken) authentication.getCredentials();
             String accessToken = token.getAccessToken();
-            Claims claims = jwtService.parseClaims(accessToken);
+            Claims claims = jwtService.verifyAccessToken(accessToken);
             UserPrincipal principal = toPrincipal(claims);
             return JwtAuthenticationToken.authenticated(principal, token, DEFAULT_AUTHORITIES);
         } catch (ExpiredJwtException e) {   // accessToken 만료

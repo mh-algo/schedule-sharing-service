@@ -1,6 +1,7 @@
 package com.minhyung.schedule.auth.service;
 
 import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserStatusDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,5 +17,11 @@ public class UserService {
     public UserInfoDto getUserInfo(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+    }
+
+    @Transactional(readOnly = true)
+    public UserStatusDto getUserStatusDto(Long id) {
+        return userRepository.findByUserId(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
     }
 }

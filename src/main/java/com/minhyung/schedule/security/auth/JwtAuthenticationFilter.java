@@ -1,8 +1,11 @@
 package com.minhyung.schedule.security.auth;
 
 import com.minhyung.schedule.security.auth.exception.AccessTokenExpiredException;
+import com.minhyung.schedule.security.auth.exception.InvalidJwtException;
 import com.minhyung.schedule.security.jwt.JwtHeader;
 import com.minhyung.schedule.security.jwt.JwtToken;
+import com.minhyung.schedule.security.jwt.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private AuthenticationManager authenticationManager;
     private AuthenticationSuccessHandler successHandler;
     private AuthenticationFailureHandler failureHandler;
+    private JwtService jwtService;
+
+    public JwtAuthenticationFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     public void setAuthenticationManager(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -39,33 +47,65 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        JwtToken token = JwtToken.ofBearer(
+                request.getHeader(JwtHeader.ACCESS_TOKEN),
+                request.getHeader(JwtHeader.REFRESH_TOKEN)
+        );
+
         try {
-            Authentication authResult = attemptAuthentication(request);
-            if (authResult != null) {
-                successfulAuthentication(authResult);
+            // Access Token 인증
+            if (token.isEmpty()) {  // 토큰이 없을 경우
+                chain.doFilter(request, response);
+                return;
+            }
+            if (!token.hasBearerPrefix()) {     // "Bearer "로 시작하지 않는 경우
+                throw new InvalidJwtException("Invalid JWT token");
+            }
+
+            Authentication auth = attemptAuthentication(token);
+            if (auth != null) {
+                successfulAuthentication(auth);
+                chain.doFilter(request, response);
+                return;
+            }
+
+            // Refresh Token 검증 후 재발급
+            Authentication reAuth = reissueToken(token);
+            if (reAuth != null) {
+                successfulAuthentication(request, response, reAuth);
             }
             chain.doFilter(request, response);
-        } catch (AccessTokenExpiredException e) {
-            // TODO: Refresh Token 검증 후 재발급
         } catch (AuthenticationException e) {
             this.failureHandler.onAuthenticationFailure(request, response, e);
         }
     }
 
-    private Authentication attemptAuthentication(HttpServletRequest request) {
-        String authHeader = request.getHeader(JwtHeader.ACCESS_TOKEN);
-        String refreshHeader = request.getHeader(JwtHeader.REFRESH_TOKEN);
-        JwtToken token = JwtToken.ofBearer(authHeader, refreshHeader);
-        if (token.isEmpty()) {  // 토큰이 없을 경우
-            return null;
+    private Authentication reissueToken(JwtToken token) {
+        try {
+            JwtToken reissued = jwtService.reissueJwtToken(token.getRefreshToken());    // token 재발급
+            return attemptAuthentication(reissued);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidJwtException(e.getMessage(), e);
         }
-        JwtAuthenticationToken authRequest = JwtAuthenticationToken.unauthenticated(token);
-        return this.authenticationManager.authenticate(authRequest);
+    }
+
+    private Authentication attemptAuthentication(JwtToken token) {
+        try {
+            JwtAuthenticationToken authRequest = JwtAuthenticationToken.unauthenticated(token);
+            return this.authenticationManager.authenticate(authRequest);
+        } catch (AccessTokenExpiredException e) {
+            return null;    // Access 만료는 바깥 흐름이 Refresh로 넘어가게 하기 위해 null로 신호
+        }
     }
 
     private void successfulAuthentication(Authentication authentication) {
         SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
         context.setAuthentication(authentication);
         this.securityContextHolderStrategy.setContext(context);
+    }
+
+    private void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
+        successfulAuthentication(authentication);
+        this.successHandler.onAuthenticationSuccess(request, response, authentication);
     }
 }
