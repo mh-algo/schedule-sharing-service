@@ -3,6 +3,8 @@ package com.minhyung.schedule.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPathsUtils;
+import com.minhyung.schedule.security.auth.ApiAccessDeniedHandler;
+import com.minhyung.schedule.security.auth.ApiAuthenticationEntryPoint;
 import com.minhyung.schedule.security.auth.JwtAuthenticationProvider;
 import com.minhyung.schedule.security.auth.handler.JwtAuthenticationFailureHandler;
 import com.minhyung.schedule.security.auth.handler.JwtAuthenticationSuccessHandler;
@@ -13,6 +15,7 @@ import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
 import com.minhyung.schedule.security.login.LoginUserDetailsService;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,10 +59,13 @@ public class SecurityConfig {
                         .failureHandler(new JwtAuthenticationFailureHandler())
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("signup")).permitAll()
-                        .anyRequest().authenticated());
-
+                        .anyRequest().authenticated())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new ApiAuthenticationEntryPoint(objectMapper))
+                        .accessDeniedHandler(new ApiAccessDeniedHandler(objectMapper)));
         return http.build();
     }
 
