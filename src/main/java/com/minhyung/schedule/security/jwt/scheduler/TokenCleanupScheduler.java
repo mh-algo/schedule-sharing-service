@@ -19,8 +19,8 @@ public class TokenCleanupScheduler {
     private final Map<String, TokenExpiryCleaner> cleaners;
 
     @Scheduled(
-            fixedDelayString = "10000", // "${jwt.cleanup.delay-ms}",
-            initialDelayString = "0" // "${jwt.cleanup.initial-ms}"
+            fixedDelayString = "${jwt.cleanup.delay-ms}",
+            initialDelayString = "${jwt.cleanup.initial-ms}"
     )
     public void run() {
         for (Map.Entry<String, TokenExpiryCleaner> entry : cleaners.entrySet()) {
@@ -35,7 +35,7 @@ public class TokenCleanupScheduler {
             if (removed > 0) {
                 log.info("token-cleanup: cleaner={}, removed={}, took={}ms", name, removed, tookMs);
             } else {
-                log.warn("token-cleanup: cleaner={}, removed=0, took={}ms", name, tookMs);
+                log.debug("token-cleanup: cleaner={}, removed=0, took={}ms", name, tookMs);
             }
         }
     }
