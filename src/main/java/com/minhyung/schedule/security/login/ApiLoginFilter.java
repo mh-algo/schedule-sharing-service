@@ -35,7 +35,7 @@ public class ApiLoginFilter extends AbstractAuthenticationProcessingFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         if (!request.getMethod().equals("POST")) {
-            throw new MethodNotAllowedException("Authentication method not supported: " + request.getMethod());
+            throw new MethodNotAllowedException("Authentication method not supported: " + request.getMethod(), "POST");
         } else {
             try {
                 LoginRequest loginRequest = obtainLoginRequest(request);

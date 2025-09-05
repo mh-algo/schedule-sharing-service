@@ -26,13 +26,18 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
+        ErrorCode errorCode = toCode(exception);
+        writeAuthenticationFailureResponse(response, errorCode);
+    }
+
+    private ErrorCode toCode(AuthenticationException exception) throws IOException {
         if (exception instanceof DisabledException ||        // 계정 정지
                 exception instanceof TokenExpiredException ||       // 토큰 만료
                 exception instanceof BadCredentialsException ||     // 사용자 정보 x
                 exception instanceof InvalidJwtException) {         // 유효하지 않은 토큰
-            writeAuthenticationFailureResponse(response, AuthenticationErrorCode.INVALID_AUTHENTICATION);
+            return AuthenticationErrorCode.INVALID_AUTHENTICATION;
         }  else {    // 서버 에러
-            writeAuthenticationFailureResponse(response, AuthenticationErrorCode.AUTHENTICATION_FAILED);
+            return AuthenticationErrorCode.AUTHENTICATION_FAILED;
         }
     }
 
@@ -40,7 +45,7 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(errorCode.getStatus().value());
-        String body = objectMapper.writeValueAsString(ApiResult.error(errorCode, errorCode.getMessage()));
+        String body = objectMapper.writeValueAsString(ApiResult.error(errorCode));
         response.getWriter().write(body);
     }
 }

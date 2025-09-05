@@ -10,7 +10,6 @@ import com.minhyung.schedule.security.exception.MethodNotAllowedException;
 import com.minhyung.schedule.security.login.exception.LoginErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -29,34 +28,55 @@ public class LoginAuthenticationFailureHandler implements AuthenticationFailureH
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
-        if (exception instanceof BadCredentialsException) {   // 로그인 정보 불일치
-            ErrorCode errorCode = LoginErrorCode.INVALID_CREDENTIALS;
-            writeLoginFailureResponse(response, errorCode, errorCode.getMessage());
-        } else if (exception instanceof DisabledException) {    // 계정 정지
-            ErrorCode errorCode = LoginErrorCode.ACCOUNT_SUSPENDED;
-            writeLoginFailureResponse(response, errorCode, errorCode.getMessage());
-        } else if (exception instanceof MethodNotAllowedException) {   // post 요청 x
-            ErrorCode errorCode = AuthenticationErrorCode.METHOD_NOT_ALLOWED;
-            response.setHeader("Allow", HttpMethod.POST.name());
-            writeLoginFailureResponse(response, errorCode, errorCode.getMessage());
-        } else if (exception instanceof InvalidJsonPropertyException e) {    // 잘못된 json property
-            ErrorCode errorCode = AuthenticationErrorCode.INVALID_JSON_PROPERTY;
-            String message = String.format(errorCode.getMessage(), e.getPropertyName());
-            writeLoginFailureResponse(response, errorCode, message);
-        } else if (exception instanceof InvalidJsonFormatException) {   // 잘못된 요청 형식(json parsing 실패)
-            ErrorCode errorCode = AuthenticationErrorCode.INVALID_JSON_FORMAT;
-            writeLoginFailureResponse(response, errorCode, errorCode.getMessage());
-        } else {
-            ErrorCode errorCode = LoginErrorCode.LOGIN_FAILED;
-            writeLoginFailureResponse(response, errorCode, errorCode.getMessage());
+        ResponseDto responseDto = toResponseDto(exception);
+
+        if (exception instanceof MethodNotAllowedException e) {
+            response.setHeader("Allow", e.getSupportedMethod());
         }
+        writeLoginFailureResponse(response, responseDto);
     }
 
-    private void writeLoginFailureResponse(HttpServletResponse response, ErrorCode errorCode, String message) throws IOException {
+    private ResponseDto toResponseDto(AuthenticationException exception) {
+        ErrorCode errorCode;
+        String message = null;
+
+        if (exception instanceof BadCredentialsException) {   // 로그인 정보 불일치
+            errorCode = LoginErrorCode.INVALID_CREDENTIALS;
+        } else if (exception instanceof DisabledException) {    // 계정 정지
+            errorCode = LoginErrorCode.ACCOUNT_SUSPENDED;
+        } else if (exception instanceof MethodNotAllowedException) {   // post 요청 x
+            errorCode = AuthenticationErrorCode.METHOD_NOT_ALLOWED;
+        } else if (exception instanceof InvalidJsonPropertyException e) {    // 잘못된 json property
+            errorCode = AuthenticationErrorCode.INVALID_JSON_PROPERTY;
+            message = String.format(errorCode.getMessage(), e.getPropertyName());
+        } else if (exception instanceof InvalidJsonFormatException) {   // 잘못된 요청 형식(json parsing 실패)
+            errorCode = AuthenticationErrorCode.INVALID_JSON_FORMAT;
+        } else {
+            errorCode = LoginErrorCode.LOGIN_FAILED;      // 서버 문제로 로그인 실패
+        }
+
+        return message == null
+                ? new ResponseDto(errorCode)
+                : new ResponseDto(errorCode, message);
+    }
+
+    private void writeLoginFailureResponse(HttpServletResponse response, ResponseDto responseDto) throws IOException {
+        ErrorCode errorCode = responseDto.errorCode();
+        String message = responseDto.message();
+
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(errorCode.getStatus().value());
         String body = objectMapper.writeValueAsString(ApiResult.error(errorCode, message));
         response.getWriter().write(body);
+    }
+
+    private record ResponseDto(
+            ErrorCode errorCode,
+            String message
+    ) {
+        private ResponseDto(ErrorCode errorCode) {
+            this(errorCode, errorCode.getMessage());
+        }
     }
 }

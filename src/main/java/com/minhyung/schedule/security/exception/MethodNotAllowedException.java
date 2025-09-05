@@ -3,11 +3,14 @@ package com.minhyung.schedule.security.exception;
 import org.springframework.security.core.AuthenticationException;
 
 public class MethodNotAllowedException extends AuthenticationException {
-    public MethodNotAllowedException(String message, Throwable cause) {
-        super(message, cause);
+    private final String supportedMethod;
+
+    public MethodNotAllowedException(String message, String supportedMethod) {
+        super(message);
+        this.supportedMethod = supportedMethod;
     }
 
-    public MethodNotAllowedException(String message) {
-        super(message);
+    public String getSupportedMethod() {
+        return supportedMethod;
     }
 }
