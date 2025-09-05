@@ -50,13 +50,13 @@ public class SecurityConfig {
                 .with(new ApiLoginConfigurer(objectMapper), config -> config
                         .authenticationManager(authenticationManager)
                         .loginProcessingUrl(ApiPathsUtils.auth("login"))
-                        .successHandler(new LoginAuthenticationSuccessHandler(jwtService))
-                        .failureHandler(new LoginAuthenticationFailureHandler())
+                        .successHandler(new LoginAuthenticationSuccessHandler(jwtService, objectMapper))
+                        .failureHandler(new LoginAuthenticationFailureHandler(objectMapper))
                 )
                 .with(new JwtAuthenticationConfigurer(objectMapper, jwtService), config -> config
                         .authenticationManager(authenticationManager)
                         .successHandler(new JwtAuthenticationSuccessHandler())
-                        .failureHandler(new JwtAuthenticationFailureHandler())
+                        .failureHandler(new JwtAuthenticationFailureHandler(objectMapper))
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()

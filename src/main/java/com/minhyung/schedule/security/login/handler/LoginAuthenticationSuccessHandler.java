@@ -18,13 +18,10 @@ import java.nio.charset.StandardCharsets;
 
 public class LoginAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtService jwtService;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    public LoginAuthenticationSuccessHandler(JwtService jwtService) {
+    public LoginAuthenticationSuccessHandler(JwtService jwtService, ObjectMapper objectMapper) {
         this.jwtService = jwtService;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

@@ -18,9 +18,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class JwtAuthenticationFailureHandler implements AuthenticationFailureHandler {
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    public void setObjectMapper(ObjectMapper objectMapper) {
+    public JwtAuthenticationFailureHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

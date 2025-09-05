@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class LoginAuthenticationFailureHandler implements AuthenticationFailureHandler {
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    public void setObjectMapper(ObjectMapper objectMapper) {
+    public LoginAuthenticationFailureHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
