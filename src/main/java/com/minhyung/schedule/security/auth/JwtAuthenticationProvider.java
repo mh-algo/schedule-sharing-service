@@ -5,6 +5,7 @@ import com.minhyung.schedule.security.auth.exception.InvalidJwtException;
 import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.principal.UserPrincipal;
+import com.minhyung.schedule.security.principal.UserPrincipalMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -31,19 +32,13 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
             JwtToken token = (JwtToken) authentication.getCredentials();
             String accessToken = token.getAccessToken();
             Claims claims = jwtService.verifyAccessToken(accessToken);
-            UserPrincipal principal = toPrincipal(claims);
+            UserPrincipal principal = UserPrincipalMapper.from(claims);
             return JwtAuthenticationToken.authenticated(principal, token, DEFAULT_AUTHORITIES);
         } catch (ExpiredJwtException e) {   // accessToken 만료
             throw new AccessTokenExpiredException("Expired Access token");
         } catch (JwtException | IllegalArgumentException e) {
             throw new InvalidJwtException(e.getMessage(), e);
         }
-    }
-
-    public UserPrincipal toPrincipal(Claims claims) {
-        Long id = Long.valueOf(claims.getSubject());
-        Boolean verified = claims.get("verified", Boolean.class);
-        return new UserPrincipal(id, verified);
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.minhyung.schedule.security.jwt.exception.DisabledAccountException;
 import com.minhyung.schedule.security.jwt.repository.TokenBlackList;
 import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
+import com.minhyung.schedule.security.principal.UserPrincipalMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class JwtService {
         if (userStatus.status().isSuspended()) {    // 계정이 정지된 경우
             throw new DisabledAccountException("Account is disabled");
         }
-        return issueJwtToken(toPrincipal(userStatus));
+        return issueJwtToken(UserPrincipalMapper.from(userStatus));
     }
 
     private void saveBlackList(String sub, String refreshToken, String reason) throws JwtException {
@@ -67,11 +68,5 @@ public class JwtService {
             throw new JwtException("Invalid JWT");
         }
         return claims;
-    }
-
-    public UserPrincipal toPrincipal(UserStatusDto userStatus) {
-        Long id = userStatus.id();
-        boolean verified = !userStatus.status().isUnverified();
-        return new UserPrincipal(id, verified);
     }
 }
