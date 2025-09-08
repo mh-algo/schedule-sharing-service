@@ -1,7 +1,9 @@
 package com.minhyung.schedule.security.jwt.service;
 
+import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.dto.IssuedToken;
+import com.minhyung.schedule.security.jwt.repository.TokenBlackList;
 import com.minhyung.schedule.security.jwt.repository.TokenStore;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import com.minhyung.schedule.security.testsupport.TestToken;
@@ -30,12 +32,18 @@ class JwtServiceTest {
     @Mock
     private TokenStore tokenStore;
 
+    @Mock
+    private TokenBlackList tokenBlackList;
+
+    @Mock
+    private UserService userService;
+
     private static final Clock CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
     private static final Instant NOW = Instant.now(CLOCK);
 
     @BeforeEach
     void setUp() {
-        jwtService = new JwtService(jwtProvider, tokenStore, CLOCK);
+        jwtService = new JwtService(jwtProvider, tokenStore, tokenBlackList, CLOCK, userService);
     }
 
     @Test
@@ -50,7 +58,7 @@ class JwtServiceTest {
         when(jwtProvider.issueRefresh(principal, NOW)).thenReturn(new IssuedToken(sub, refreshToken,  NOW.plus(Duration.ofDays(7))));
 
         // when
-        JwtToken jwtToken = jwtService.createJwtToken(principal);
+        JwtToken jwtToken = jwtService.issueJwtToken(principal);
 
         // then
         assertThat(jwtToken).isNotNull();
