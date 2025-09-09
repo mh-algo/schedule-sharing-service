@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private AuthenticationManager authenticationManager;
     private AuthenticationSuccessHandler successHandler;
     private AuthenticationFailureHandler failureHandler;
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -90,13 +90,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             JwtToken reissued = jwtService.reissueJwtToken(token.getRefreshToken());    // token 재발급
             return attemptAuthentication(reissued);
-        } catch (DisabledAccountException e) {
+        } catch (DisabledAccountException e) {      // 계정이 정지된 경우
             throw new DisabledException("Disabled");
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {     // 사용자 정보 조회 실패
             throw new BadCredentialsException("Bad credentials");
-        } catch (ExpiredJwtException e) {
+        } catch (ExpiredJwtException e) {       // 만료된 refresh 토큰
             throw new TokenExpiredException("Expired JWT token");
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (JwtException | IllegalArgumentException e) {   // 유효하지 않은 토큰
             throw new InvalidJwtException(e.getMessage(), e);
         }
     }
