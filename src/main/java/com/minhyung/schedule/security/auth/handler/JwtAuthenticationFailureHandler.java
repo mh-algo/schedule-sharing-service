@@ -30,7 +30,7 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
         writeAuthenticationFailureResponse(response, errorCode);
     }
 
-    private ErrorCode toCode(AuthenticationException exception) throws IOException {
+    private ErrorCode toCode(AuthenticationException exception) {
         if (exception instanceof DisabledException ||        // 계정 정지
                 exception instanceof TokenExpiredException ||       // 토큰 만료
                 exception instanceof BadCredentialsException ||     // 사용자 정보 x
