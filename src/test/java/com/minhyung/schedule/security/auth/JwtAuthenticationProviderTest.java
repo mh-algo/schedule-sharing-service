@@ -21,8 +21,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -90,6 +89,22 @@ class JwtAuthenticationProviderTest {
         ThrowingCallable action = () -> jwtAuthenticationProvider.authenticate(unauthenticated);
 
         // then
-        assertThatExceptionOfType(InvalidJwtException.class).isThrownBy(action);
+        assertThatThrownBy(action).isInstanceOf(InvalidJwtException.class);
+    }
+
+    @Test
+    void access_token이_empty인_경우() {
+        // given
+        String access = "";
+        JwtToken tokens = TestToken.tokens(access, "");
+        JwtAuthenticationToken unauthenticated = JwtAuthenticationToken.unauthenticated(tokens);
+
+        when(jwtService.verifyAccessToken(access)).thenThrow(new IllegalArgumentException(""));
+
+        // when
+        ThrowingCallable action = () -> jwtAuthenticationProvider.authenticate(unauthenticated);
+
+        // then
+        assertThatThrownBy(action).isInstanceOf(InvalidJwtException.class);
     }
 }

@@ -49,12 +49,24 @@ public final class TestToken {
         return JwtUtils.encode(sub, SECRET_KEY, now, now.plus(Duration.ofDays(7)));
     }
 
-    public static JwtToken tokens() {
-        return tokens(access(), refresh());
+    public static JwtToken headers() {
+        return headers(HEADER_PREFIX + access(), HEADER_PREFIX + refresh());
     }
 
-    public static JwtToken headers() {
-        return tokens(HEADER_PREFIX + access(), HEADER_PREFIX + refresh());
+    public static JwtToken headers(String accessHeader, String refreshHeader) {
+        return JwtToken.ofBearer(accessHeader, refreshHeader);
+    }
+
+    public static String accessHeader() {
+        return HEADER_PREFIX + access();
+    }
+
+    public static String refreshHeader() {
+        return HEADER_PREFIX + refresh();
+    }
+
+    public static JwtToken tokens() {
+        return tokens(access(), refresh());
     }
 
     public static JwtToken tokens(String sub) {

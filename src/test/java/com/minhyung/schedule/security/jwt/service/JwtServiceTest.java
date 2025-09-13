@@ -27,8 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -225,6 +224,21 @@ class JwtServiceTest {
     }
 
     @Test
+    void access_token이_empty인_경우() {
+        // given
+        String accessToken = "";
+
+        when(jwtProvider.parseClaims(accessToken)).thenThrow(new IllegalArgumentException(""));
+
+        // when
+        ThrowingCallable action = () -> jwtService.verifyAccessToken(accessToken);
+
+        // then
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(action);
+    }
+
+    @Test
     void 유효한_refresh_token일_경우() {
         // given
         String refreshToken = TestToken.refresh(SUB, CLOCK);
@@ -252,8 +266,21 @@ class JwtServiceTest {
         ThrowingCallable action = () -> jwtService.verifyRefreshToken(refreshToken);
 
         // then
-        assertThatExceptionOfType(JwtException.class)
-                .isThrownBy(action);
+        assertThatThrownBy(action).isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void refresh_token이_empty일_경우() {
+        // given
+        String refreshToken = "";
+
+        when(jwtProvider.parseClaims(refreshToken)).thenThrow(new IllegalArgumentException(""));
+
+        // when
+        ThrowingCallable action = () -> jwtService.verifyRefreshToken(refreshToken);
+
+        // then
+        assertThatThrownBy(action).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

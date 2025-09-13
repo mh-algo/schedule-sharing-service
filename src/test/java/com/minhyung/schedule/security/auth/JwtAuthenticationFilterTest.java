@@ -143,6 +143,33 @@ class JwtAuthenticationFilterTest {
         verify(failureHandler, never()).onAuthenticationFailure(any(), any(), any());
     }
 
+    @Test
+    void access_token없이_refresh_token만_있는_경우_토큰_재발급() throws ServletException, IOException {
+        // given
+        String refreshHeader = TestToken.refreshHeader();
+        JwtToken tokens = TestToken.headers("", refreshHeader);
+        Map<String, String> headers = createHeaders("", refreshHeader);
+        MockHttpServletRequest request = createRequest(headers, AUTH_REQUIRED_PATH);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        JwtToken reissued = TestToken.tokens();
+        JwtAuthenticationToken authenticated = JwtAuthenticationToken.authenticated(
+                mock(UserPrincipal.class), reissued, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        when(authenticationManager.authenticate(JwtAuthenticationToken.unauthenticated(tokens))).
+                thenThrow(new InvalidJwtException(""));
+        when(jwtService.reissueJwtToken(tokens.getRefreshToken())).thenReturn(reissued);    // 토큰 재발급
+        when(authenticationManager.authenticate(JwtAuthenticationToken.unauthenticated(reissued))).
+                thenReturn(authenticated);  // 재발급된 토큰으로 재인증
+
+        // when
+        jwtAuthenticationFilter.doFilterInternal(request, response, mock(FilterChain.class));
+
+        // then
+        verify(authenticationManager, times(2)).authenticate(any());
+        verify(successHandler, times(1)).onAuthenticationSuccess(any(), any(), any());
+        verify(failureHandler, never()).onAuthenticationFailure(any(), any(), any());
+    }
+
     @ParameterizedTest
     @MethodSource("reissueException")
     void 토큰_재발급_실패(AuthenticationException exception) throws ServletException, IOException {
