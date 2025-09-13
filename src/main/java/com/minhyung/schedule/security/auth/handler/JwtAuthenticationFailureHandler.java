@@ -6,6 +6,7 @@ import com.minhyung.schedule.common.exception.ErrorCode;
 import com.minhyung.schedule.security.auth.exception.InvalidJwtException;
 import com.minhyung.schedule.security.auth.exception.TokenExpiredException;
 import com.minhyung.schedule.security.exception.AuthenticationErrorCode;
+import com.minhyung.schedule.security.exception.MethodNotAllowedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -27,6 +28,10 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
         ErrorCode errorCode = toCode(exception);
+
+        if (exception instanceof MethodNotAllowedException e) {
+            response.setHeader("Allow", e.getSupportedMethod());
+        }
         writeAuthenticationFailureResponse(response, errorCode);
     }
 
@@ -36,7 +41,9 @@ public class JwtAuthenticationFailureHandler implements AuthenticationFailureHan
                 exception instanceof BadCredentialsException ||     // 사용자 정보 x
                 exception instanceof InvalidJwtException) {         // 유효하지 않은 토큰
             return AuthenticationErrorCode.INVALID_AUTHENTICATION;
-        }  else {    // 서버 에러
+        }  else if (exception instanceof MethodNotAllowedException) {   // 허용되지 않은 메서드 요청
+            return AuthenticationErrorCode.METHOD_NOT_ALLOWED;
+        } else {    // 서버 에러
             return AuthenticationErrorCode.AUTHENTICATION_FAILED;
         }
     }
