@@ -26,4 +26,5 @@ public class AuthController implements AuthApiDocs {
         return ResponseEntity.created(URI.create(ApiPathsUtils.auth(response.id())))
                 .body(ApiResult.created("회원가입이 완료되었습니다."));
     }
+
 }
