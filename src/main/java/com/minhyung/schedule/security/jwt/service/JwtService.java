@@ -33,6 +33,7 @@ public class JwtService {
         this.userService = userService;
     }
 
+    // 토큰 발급
     public JwtToken issueJwtToken(UserPrincipal principal) {
         Instant now = Instant.now(clock);
         IssuedToken access = jwtProvider.issueAccess(principal, now);
@@ -41,6 +42,7 @@ public class JwtService {
         return JwtToken.ofRaw(access.token(), refresh.token());
     }
 
+    // 토큰 재발급
     public JwtToken reissueJwtToken(String refreshToken) {
         Claims claims = verifyRefreshToken(refreshToken);       // refreshToken 검증
         String sub = claims.getSubject();
@@ -52,21 +54,31 @@ public class JwtService {
         return issueJwtToken(UserPrincipalMapper.from(userStatus));
     }
 
+    // 블랙리스트 등록
     private void saveBlackList(String sub, String refreshToken, String reason) throws JwtException {
         TokenData tokenData = tokenStore.find(sub).orElseThrow(() -> new JwtException("Invalid JWT"));
         tokenStore.remove(sub);
         tokenBlackList.save(refreshToken, reason, tokenData.expiresAt());
     }
 
+    // access 토큰 검증
     public Claims verifyAccessToken(String accessToken) throws IllegalArgumentException, JwtException {
         return jwtProvider.parseClaims(accessToken);
     }
 
+    // refresh 토큰 검증
     public Claims verifyRefreshToken(String refreshToken) throws IllegalArgumentException, JwtException {
         Claims claims = jwtProvider.parseClaims(refreshToken);
         if (tokenStore.isInvalid(claims.getSubject(), refreshToken) || tokenBlackList.isBlackListed(refreshToken)) {
             throw new JwtException("Invalid JWT");
         }
         return claims;
+    }
+
+    // 토큰 무효화
+    public void invalidateRefreshToken(String refreshToken, String reason) throws IllegalArgumentException, JwtException {
+        Claims claims = verifyRefreshToken(refreshToken);
+        String id = claims.getSubject();
+        saveBlackList(id, refreshToken, reason);
     }
 }
