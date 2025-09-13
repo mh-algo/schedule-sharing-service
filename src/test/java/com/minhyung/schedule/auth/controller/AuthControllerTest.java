@@ -3,11 +3,16 @@ package com.minhyung.schedule.auth.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
+import com.minhyung.schedule.auth.service.LogoutService;
 import com.minhyung.schedule.auth.service.SignupService;
-import com.minhyung.schedule.common.ApiPaths;
 import com.minhyung.schedule.common.ApiPathsUtils;
+import com.minhyung.schedule.common.exception.ApiException;
 import com.minhyung.schedule.common.exception.ApiExceptionHandler;
+import com.minhyung.schedule.common.exception.ClientErrorCode;
 import com.minhyung.schedule.common.exception.ValidationErrorCode;
+import com.minhyung.schedule.security.exception.AuthenticationErrorCode;
+import com.minhyung.schedule.security.jwt.JwtHeader;
+import com.minhyung.schedule.security.testsupport.TestToken;
 import com.minhyung.schedule.testsupport.TestObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +31,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,17 +41,21 @@ class AuthControllerTest {
     @Mock
     private SignupService signupService;
 
+    @Mock
+    private LogoutService logoutService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(signupService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(signupService, logoutService))
                 .setValidator(new LocalValidatorFactoryBean())
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
     }
 
     private static final String SIGNUP_PATH = ApiPathsUtils.auth("/signup");
+    private static final String LOGOUT_PATH = ApiPathsUtils.auth("/logout");
     private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
 
     private static SignupRequest createSignupRequest(String username, String password) {
@@ -62,8 +72,9 @@ class AuthControllerTest {
         SignupResponse response = new SignupResponse(id, username);
         String content = objectMapper.writeValueAsString(request);
 
-        // when
         when(signupService.signup(request)).thenReturn(response);
+
+        // when
         ResultActions resultActions = mockMvc.perform(post(SIGNUP_PATH)
                 .characterEncoding(StandardCharsets.UTF_8.name())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -208,5 +219,65 @@ class AuthControllerTest {
                 .andExpect(jsonPath("status").value(errorCode.getStatus().value()))
                 .andExpect(jsonPath("code").value(errorCode.getCode()))
                 .andExpect(jsonPath("message").value("비밀번호가 일치하지 않습니다."));
+    }
+
+    @Test
+    void 로그아웃_성공() throws Exception {
+        // given
+        String refreshHeader = TestToken.refreshHeader();
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post(LOGOUT_PATH)
+                .characterEncoding(StandardCharsets.UTF_8.name())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtHeader.REFRESH_TOKEN, refreshHeader)
+        );
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("로그아웃 되었습니다."));
+    }
+
+    @Test
+    void request_header에_refresh_token이_없는_경우() throws Exception {
+        // given
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post(LOGOUT_PATH)
+                .characterEncoding(StandardCharsets.UTF_8.name())
+                .contentType(MediaType.APPLICATION_JSON)
+        );
+
+        // then
+        ClientErrorCode errorCode = ClientErrorCode.MISSING_REQUEST_HEADER;
+        String errorMessage = String.format(errorCode.getMessage(), JwtHeader.REFRESH_TOKEN);
+        resultActions.andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("status").value(401))
+                .andExpect(jsonPath("code").value(errorCode.getCode()))
+                .andExpect(jsonPath("message").value(errorMessage));
+    }
+
+    @Test
+    void 유효하지_않은_refresh_token인_경우() throws Exception {
+        // given
+        String invalidRefreshHeader = TestToken.refresh();
+        AuthenticationErrorCode errorCode = AuthenticationErrorCode.INVALID_AUTHENTICATION;
+
+        doThrow(new ApiException(errorCode))
+                .when(logoutService).logout(invalidRefreshHeader);
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post(LOGOUT_PATH)
+                .characterEncoding(StandardCharsets.UTF_8.name())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(JwtHeader.REFRESH_TOKEN, invalidRefreshHeader)
+        );
+
+        // then
+        resultActions.andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("status").value(401))
+                .andExpect(jsonPath("code").value(errorCode.getCode()))
+                .andExpect(jsonPath("message").value(errorCode.getMessage()));
     }
 }
