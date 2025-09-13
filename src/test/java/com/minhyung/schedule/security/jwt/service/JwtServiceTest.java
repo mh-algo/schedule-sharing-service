@@ -47,11 +47,11 @@ class JwtServiceTest {
     @Mock
     private UserService userService;
 
-    private static final Clock CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");       // 현재 시간
+    private static final Clock CLOCK = TestClock.now();       // 현재 시간
     private static final Instant NOW = Instant.now(CLOCK);
     private static final UserPrincipal PRINCIPAL = createPrincipal();
     private static final String SUB = PRINCIPAL.id().toString();
-    private static final Clock CREATED_AT = TestClock.fixedAt("2025-07-31T00:00:00Z");      // 요청받은 토큰의 발급된 시간
+    private static final Clock CREATED_AT = Clock.offset(CLOCK, Duration.ofDays(-1));      // 요청받은 토큰의 발급된 시간
 
     @BeforeEach
     void setUp() {

@@ -24,7 +24,7 @@ class JwtProviderTest {
     private static final long ACCESS_TOKEN_TTL_MS = 3600000L;
     private static final long REFRESH_TOKEN_TTL_MS = 604800000L;
     private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
-    private static final Clock CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Clock CLOCK = TestClock.now();
     private static final Instant NOW = Instant.now(CLOCK);
 
     private JwtProvider jwtProvider;
