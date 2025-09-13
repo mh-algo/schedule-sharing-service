@@ -121,8 +121,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             JwtAuthenticationToken authRequest = JwtAuthenticationToken.unauthenticated(token);
             return this.authenticationManager.authenticate(authRequest);
-        } catch (AccessTokenExpiredException e) {
-            return null;    // Access 만료는 바깥 흐름이 Refresh로 넘어가게 하기 위해 null로 신호
+        } catch (AccessTokenExpiredException | InvalidJwtException e) {
+            return null;    // Refresh Token으로 토큰 재발급 시도를 하기 위해 null 반환
         }
     }
 
