@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Auth", description = "회원 가입, 로그인, 로그아웃 등 인증 관련 API")
 public interface AuthApiDocs {
     @Operation(summary = "회원가입", description = "사용자로부터 아이디와 비밀번호 등의 정보를 입력받아 회원으로 등록합니다.")
+    @SecurityRequirements
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "회원 가입 완료",
                     headers = {
@@ -38,6 +40,7 @@ public interface AuthApiDocs {
     ResponseEntity<ApiResult<Void>> signup(SignupRequest request);
 
     @Operation(summary = "로그인", description = "사용자로부터 아이디와 비밀번호를 입력받아 로그인합니다.")
+    @SecurityRequirements
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "로그인 완료",
                     headers = {
@@ -72,4 +75,21 @@ public interface AuthApiDocs {
             String password
     ) {
     }
+
+    @Operation(summary = "로그아웃", description = "인증된 사용자의 토큰을 무효화하여 로그아웃합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 완료",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schemaProperties = {
+                                    @SchemaProperty(name= "status", schema = @Schema(type = "integer", example = "200")),
+                                    @SchemaProperty(name= "message", schema = @Schema(type = "string", example = "로그아웃 되었습니다."))
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "405", description = "AUTH_001", content = @Content),
+            @ApiResponse(responseCode = "401", description = "AUTH_004", content = @Content),
+            @ApiResponse(responseCode = "400", content = @Content)
+    })
+    ResponseEntity<ApiResult<Void>> logout(String refreshToken);
 }

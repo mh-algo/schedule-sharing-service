@@ -61,7 +61,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/swagger-ui/index.html#").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("signup")).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("logout")).permitAll()

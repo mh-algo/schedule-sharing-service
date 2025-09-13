@@ -1,8 +1,11 @@
 package com.minhyung.schedule.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +22,13 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
+        SecurityScheme scheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("Bearer")
+                .bearerFormat("JWT")
+                .in(SecurityScheme.In.HEADER)
+                .name("Authorization");
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Schedule Sharing Service API")
@@ -27,6 +37,7 @@ public class SwaggerConfig {
                 ).externalDocs(new ExternalDocumentation()
                         .description("에러 코드 전체 목록은 여기를 참고하세요.")
                         .url("https://docs.google.com/spreadsheets/d/12WSgsgbXCwYlu5p4H0jHIue0zceXF-0WW2W6EiX5UFI/edit?gid=784980039#gid=784980039")
-                );
+                ).components(new Components().addSecuritySchemes("AccessToken", scheme))
+                .addSecurityItem(new SecurityRequirement().addList("AccessToken"));
     }
 }
