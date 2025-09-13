@@ -1,7 +1,6 @@
 package com.minhyung.schedule.auth.service;
 
 import com.minhyung.schedule.auth.domain.UserInfo;
-import com.minhyung.schedule.auth.domain.UserStatus;
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
