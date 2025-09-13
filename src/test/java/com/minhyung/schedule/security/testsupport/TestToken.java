@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 
 public final class TestToken {
-    private static final Clock DEFAULT_CLOCK = TestClock.fixedAt("2025-08-01T00:00:00Z");
+    private static final Clock DEFAULT_CLOCK = TestClock.now();
     private static final String DEFAULT_SUB = "1";
     public static final String SECRET_KEY = "xkBS7dHQasgwoDllsgSMbIjfVSoY2f3IGyXvtmUor5k=";
     public static final String HEADER_PREFIX = "Bearer ";
@@ -49,12 +49,24 @@ public final class TestToken {
         return JwtUtils.encode(sub, SECRET_KEY, now, now.plus(Duration.ofDays(7)));
     }
 
-    public static JwtToken tokens() {
-        return tokens(access(), refresh());
+    public static JwtToken headers() {
+        return headers(HEADER_PREFIX + access(), HEADER_PREFIX + refresh());
     }
 
-    public static JwtToken headers() {
-        return tokens(HEADER_PREFIX + access(), HEADER_PREFIX + refresh());
+    public static JwtToken headers(String accessHeader, String refreshHeader) {
+        return JwtToken.ofBearer(accessHeader, refreshHeader);
+    }
+
+    public static String accessHeader() {
+        return HEADER_PREFIX + access();
+    }
+
+    public static String refreshHeader() {
+        return HEADER_PREFIX + refresh();
+    }
+
+    public static JwtToken tokens() {
+        return tokens(access(), refresh());
     }
 
     public static JwtToken tokens(String sub) {

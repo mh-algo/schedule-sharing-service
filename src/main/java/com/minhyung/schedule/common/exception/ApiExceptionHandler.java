@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -80,6 +81,15 @@ public class ApiExceptionHandler {
         String errorMessage = String.format(ValidationErrorCode.MISSING_REQUIRED_PARAM.getMessage(), e.getParameterName());
         log.warn("MissingServletRequestParameterException: {}", errorMessage);
         return ApiResult.error(ValidationErrorCode.MISSING_REQUIRED_PARAM, errorMessage);
+    }
+
+    // request header 누락
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResult<Void> handleMissingHeaders(MissingRequestHeaderException e) {
+        String errorMessage = String.format(ClientErrorCode.MISSING_REQUEST_HEADER.getMessage(), e.getHeaderName());
+        log.warn("MissingRequestHeaderException: {}", errorMessage);
+        return ApiResult.error(ClientErrorCode.MISSING_REQUEST_HEADER, errorMessage);
     }
 
     // 지원하지 않는 경로

@@ -2,8 +2,6 @@ package com.minhyung.schedule.security.configurer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.security.login.ApiLoginFilter;
-import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
-import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;

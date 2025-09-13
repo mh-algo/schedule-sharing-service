@@ -4,6 +4,7 @@ import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.security.auth.exception.AccessTokenExpiredException;
 import com.minhyung.schedule.security.auth.exception.InvalidJwtException;
 import com.minhyung.schedule.security.auth.exception.TokenExpiredException;
+import com.minhyung.schedule.security.exception.MethodNotAllowedException;
 import com.minhyung.schedule.security.jwt.JwtHeader;
 import com.minhyung.schedule.security.jwt.JwtToken;
 import com.minhyung.schedule.security.jwt.exception.DisabledAccountException;
@@ -14,6 +15,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -24,6 +26,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -34,6 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private AuthenticationSuccessHandler successHandler;
     private AuthenticationFailureHandler failureHandler;
     private final JwtService jwtService;
+    private RequestMatcher logoutPathRequestMatcher =
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/*/auths/logout");
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -51,6 +57,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.failureHandler = failureHandler;
     }
 
+    public void setLogoutPathRequestMatcher(RequestMatcher logoutPathRequestMatcher) {
+        this.logoutPathRequestMatcher = logoutPathRequestMatcher;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         JwtToken token = JwtToken.ofBearer(
@@ -59,26 +69,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         );
 
         try {
-            // Access Token 인증
-            if (token.isEmpty()) {  // 토큰이 없을 경우
-                chain.doFilter(request, response);
-                return;
-            }
-            if (!token.hasBearerPrefix()) {     // "Bearer "로 시작하지 않는 경우
-                throw new InvalidJwtException("Invalid JWT token");
-            }
+            if (logoutPathRequestMatcher.matches(request)) {        // 로그아웃 경로일 경우 accessToken 인증 무시
+                if (!request.getMethod().equals("POST")) {
+                    throw new MethodNotAllowedException("Authentication method not supported: " + request.getMethod(), "POST");
+                }
+            } else {
+                // Access Token 인증
+                if (token.isEmpty()) {  // 토큰이 없을 경우
+                    chain.doFilter(request, response);
+                    return;
+                }
+                if (!token.hasBearerPrefix()) {     // "Bearer "로 시작하지 않는 경우
+                    throw new InvalidJwtException("Invalid JWT token");
+                }
 
-            Authentication auth = attemptAuthentication(token);
-            if (auth != null) {
-                successfulAuthentication(auth);
-                chain.doFilter(request, response);
-                return;
-            }
+                Authentication auth = attemptAuthentication(token);
+                if (auth != null) {
+                    successfulAuthentication(auth);
+                    chain.doFilter(request, response);
+                    return;
+                }
 
-            // Refresh Token 검증 후 재발급
-            Authentication reAuth = reissueToken(token);
-            if (reAuth != null) {
-                successfulAuthentication(request, response, reAuth);
+                // Refresh Token 검증 후 재발급
+                Authentication reAuth = reissueToken(token);
+                if (reAuth != null) {
+                    successfulAuthentication(request, response, reAuth);
+                }
             }
             chain.doFilter(request, response);
         } catch (AuthenticationException e) {
@@ -105,8 +121,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             JwtAuthenticationToken authRequest = JwtAuthenticationToken.unauthenticated(token);
             return this.authenticationManager.authenticate(authRequest);
-        } catch (AccessTokenExpiredException e) {
-            return null;    // Access 만료는 바깥 흐름이 Refresh로 넘어가게 하기 위해 null로 신호
+        } catch (AccessTokenExpiredException | InvalidJwtException e) {
+            return null;    // Refresh Token으로 토큰 재발급 시도를 하기 위해 null 반환
         }
     }
 

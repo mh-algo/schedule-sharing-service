@@ -44,7 +44,7 @@ public class LoginAuthenticationFailureHandler implements AuthenticationFailureH
             errorCode = LoginErrorCode.INVALID_CREDENTIALS;
         } else if (exception instanceof DisabledException) {    // 계정 정지
             errorCode = LoginErrorCode.ACCOUNT_SUSPENDED;
-        } else if (exception instanceof MethodNotAllowedException) {   // post 요청 x
+        } else if (exception instanceof MethodNotAllowedException) {   // 허용되지 않은 메서드 요청
             errorCode = AuthenticationErrorCode.METHOD_NOT_ALLOWED;
         } else if (exception instanceof InvalidJsonPropertyException e) {    // 잘못된 json property
             errorCode = AuthenticationErrorCode.INVALID_JSON_PROPERTY;

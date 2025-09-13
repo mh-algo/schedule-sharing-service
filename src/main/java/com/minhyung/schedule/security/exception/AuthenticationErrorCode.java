@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum AuthenticationErrorCode implements ErrorCode {
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "AUTH_001", "POST 요청만 허용됩니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "AUTH_001", "허용되지 않는 메서드 요청입니다."),
     INVALID_JSON_PROPERTY(HttpStatus.BAD_REQUEST, "AUTH_002", "%s: 유효하지 않은 json property 입니다."),
     INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "AUTH_003", "요청한 형식이 올바르지 않습니다."),
     INVALID_AUTHENTICATION(HttpStatus.UNAUTHORIZED, "AUTH_004", "인증 정보가 유효하지 않습니다."),

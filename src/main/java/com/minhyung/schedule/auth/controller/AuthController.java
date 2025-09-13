@@ -3,10 +3,12 @@ package com.minhyung.schedule.auth.controller;
 import com.minhyung.schedule.auth.controller.docs.AuthApiDocs;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
+import com.minhyung.schedule.auth.service.LogoutService;
 import com.minhyung.schedule.auth.service.SignupService;
 import com.minhyung.schedule.common.ApiPaths;
 import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.common.ApiResult;
+import com.minhyung.schedule.security.jwt.JwtHeader;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class AuthController implements AuthApiDocs {
     private final SignupService signupService;
+    private final LogoutService logoutService;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResult<Void>> signup(@RequestBody @Valid SignupRequest request) {
@@ -27,4 +30,9 @@ public class AuthController implements AuthApiDocs {
                 .body(ApiResult.created("회원가입이 완료되었습니다."));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResult<Void>> logout(@RequestHeader(JwtHeader.REFRESH_TOKEN) String refreshHeader) {
+        logoutService.logout(refreshHeader);
+        return ResponseEntity.ok(ApiResult.success("로그아웃 되었습니다."));
+    }
 }

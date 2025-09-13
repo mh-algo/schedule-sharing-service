@@ -55,13 +55,16 @@ public class SecurityConfig {
                 )
                 .with(new JwtAuthenticationConfigurer(objectMapper, jwtService), config -> config
                         .authenticationManager(authenticationManager)
+                        .logoutPath(ApiPathsUtils.auth("logout"))
                         .successHandler(new JwtAuthenticationSuccessHandler())
                         .failureHandler(new JwtAuthenticationFailureHandler(objectMapper))
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("signup")).permitAll()
+                        .requestMatchers(ApiPathsUtils.auth("logout")).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new ApiAuthenticationEntryPoint(objectMapper))
