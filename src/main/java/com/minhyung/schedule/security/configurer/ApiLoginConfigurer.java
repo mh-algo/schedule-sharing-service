@@ -14,7 +14,6 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 public class ApiLoginConfigurer extends AbstractHttpConfigurer<ApiLoginConfigurer, HttpSecurity> {
-    private final ObjectMapper objectMapper;
     private final ApiLoginFilter authenticationFilter;
     private AuthenticationManager authenticationManager;
     private AuthenticationSuccessHandler successHandler;
@@ -22,7 +21,6 @@ public class ApiLoginConfigurer extends AbstractHttpConfigurer<ApiLoginConfigure
     private RequestMatcher loginProcessingUrlMatcher;
 
     public ApiLoginConfigurer(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
         this.authenticationFilter = new ApiLoginFilter(objectMapper);
     }
 
@@ -34,13 +32,6 @@ public class ApiLoginConfigurer extends AbstractHttpConfigurer<ApiLoginConfigure
         authenticationFilter.setRequiresAuthenticationRequestMatcher(loginProcessingUrlMatcher);
         http.setSharedObject(ApiLoginFilter.class, authenticationFilter);
         http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        if (successHandler instanceof LoginAuthenticationSuccessHandler loginSuccessHandler) {
-            loginSuccessHandler.setObjectMapper(objectMapper);
-        }
-        if (failureHandler instanceof LoginAuthenticationFailureHandler loginFailureHandler) {
-            loginFailureHandler.setObjectMapper(objectMapper);
-        }
     }
 
     public ApiLoginConfigurer authenticationManager(AuthenticationManager authenticationManager) {

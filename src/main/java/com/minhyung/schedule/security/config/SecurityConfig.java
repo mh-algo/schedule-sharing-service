@@ -3,13 +3,19 @@ package com.minhyung.schedule.security.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.ApiPathsUtils;
+import com.minhyung.schedule.security.auth.ApiAccessDeniedHandler;
+import com.minhyung.schedule.security.auth.ApiAuthenticationEntryPoint;
+import com.minhyung.schedule.security.auth.JwtAuthenticationProvider;
+import com.minhyung.schedule.security.auth.handler.JwtAuthenticationFailureHandler;
+import com.minhyung.schedule.security.auth.handler.JwtAuthenticationSuccessHandler;
 import com.minhyung.schedule.security.configurer.ApiLoginConfigurer;
+import com.minhyung.schedule.security.configurer.JwtAuthenticationConfigurer;
 import com.minhyung.schedule.security.jwt.service.JwtService;
 import com.minhyung.schedule.security.login.LoginAuthenticationProvider;
 import com.minhyung.schedule.security.login.LoginUserDetailsService;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationFailureHandler;
 import com.minhyung.schedule.security.login.handler.LoginAuthenticationSuccessHandler;
-import jakarta.servlet.Filter;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +38,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        AuthenticationManager authenticationManager = getApiLoginAuthenticationManager();
+        AuthenticationManager authenticationManager = getAuthenticationManager();
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -44,18 +50,31 @@ public class SecurityConfig {
                 .with(new ApiLoginConfigurer(objectMapper), config -> config
                         .authenticationManager(authenticationManager)
                         .loginProcessingUrl(ApiPathsUtils.auth("login"))
-                        .successHandler(new LoginAuthenticationSuccessHandler(jwtService))
-                        .failureHandler(new LoginAuthenticationFailureHandler())
+                        .successHandler(new LoginAuthenticationSuccessHandler(jwtService, objectMapper))
+                        .failureHandler(new LoginAuthenticationFailureHandler(objectMapper))
+                )
+                .with(new JwtAuthenticationConfigurer(objectMapper, jwtService), config -> config
+                        .authenticationManager(authenticationManager)
+                        .successHandler(new JwtAuthenticationSuccessHandler())
+                        .failureHandler(new JwtAuthenticationFailureHandler(objectMapper))
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(ApiPathsUtils.auth("login")).permitAll()
-                        .anyRequest().permitAll());     // TODO: 나중에 인증 구현 후 수정
-
+                        .requestMatchers(ApiPathsUtils.auth("signup")).permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new ApiAuthenticationEntryPoint(objectMapper))
+                        .accessDeniedHandler(new ApiAccessDeniedHandler(objectMapper)));
         return http.build();
     }
 
-    private AuthenticationManager getApiLoginAuthenticationManager() {
-        return new ProviderManager(getLoginAuthenticationProvider());
+    private AuthenticationManager getAuthenticationManager() {
+        return new ProviderManager(getJwtAuthenticationProvider(), getLoginAuthenticationProvider());
+    }
+
+    private AuthenticationProvider getJwtAuthenticationProvider() {
+        return new JwtAuthenticationProvider(jwtService);
     }
 
     private AuthenticationProvider getLoginAuthenticationProvider() {

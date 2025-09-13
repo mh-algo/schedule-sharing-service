@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
-public class JwtUtils {
+public final class JwtUtils {
     public static String encode(String subject, Map<String, Object> claims, String secretKey, Instant now, Instant expiresAt) {
         Date iat = Date.from(now);
         Date exp = Date.from(expiresAt);

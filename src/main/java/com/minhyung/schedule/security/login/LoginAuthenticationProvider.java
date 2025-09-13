@@ -2,8 +2,8 @@ package com.minhyung.schedule.security.login;
 
 import com.minhyung.schedule.common.PasswordRules;
 import com.minhyung.schedule.common.UsernameRules;
-import com.minhyung.schedule.security.login.dto.LoginUserInfo;
 import com.minhyung.schedule.security.principal.UserPrincipal;
+import com.minhyung.schedule.security.principal.UserPrincipalMapper;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -36,17 +36,11 @@ public class LoginAuthenticationProvider extends DaoAuthenticationProvider {
     @Override
     protected Authentication createSuccessAuthentication(Object principal, Authentication authentication, UserDetails user) {
         if (principal instanceof LoginUserDetails userDetails) {
-            UserPrincipal userPrincipal = toUserPrincipal(userDetails);     // userDetails에서 필요한 데이터만 principal로 등록
+            UserPrincipal userPrincipal = UserPrincipalMapper.from(userDetails);     // userDetails에서 필요한 데이터만 principal로 등록
             return super.createSuccessAuthentication(userPrincipal, authentication, user);  // AuthenticationToken 생성 후 반환
         } else {
             throw new InternalAuthenticationServiceException("Unexpected principal type");
         }
-    }
-
-    private UserPrincipal toUserPrincipal(LoginUserDetails userDetails) {
-        LoginUserInfo account = userDetails.getUserInfo();
-        boolean verified = !userDetails.isUnverified();
-        return new UserPrincipal(account.id(), verified);
     }
 
     private class DefaultPostAuthenticationChecks implements UserDetailsChecker {

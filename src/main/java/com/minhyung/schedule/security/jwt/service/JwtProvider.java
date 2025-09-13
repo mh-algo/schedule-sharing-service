@@ -3,20 +3,19 @@ package com.minhyung.schedule.security.jwt.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhyung.schedule.security.jwt.JwtUtils;
+import com.minhyung.schedule.security.jwt.dto.IssuedToken;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 
 @Component
 public class JwtProvider {
     private final ObjectMapper objectMapper;
-    private final Clock clock;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -27,31 +26,26 @@ public class JwtProvider {
     @Value("${jwt.refresh-token-ttl-ms}")
     private long refreshTokenTTLMs;
 
-    public JwtProvider(ObjectMapper objectMapper, Clock clock) {
+    public JwtProvider(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.clock = clock;
     }
 
-    public String generateAccessToken(UserPrincipal principal) {
+    public IssuedToken issueAccess(UserPrincipal principal, Instant now) {
         String sub = String.valueOf(principal.id());
         Map<String, Object> claims = objectMapper.convertValue(principal, new TypeReference<>() {});
-        Instant now = getNow();
         Instant expiresAt = now.plusMillis(accessTokenTTLMs);
-        return JwtUtils.encode(sub, claims, secretKey, now, expiresAt);
+        String access = JwtUtils.encode(sub, claims, secretKey, now, expiresAt);
+        return new IssuedToken(sub, access, expiresAt);
     }
 
-    public String generateRefreshToken(UserPrincipal principal) {
+    public IssuedToken issueRefresh(UserPrincipal principal, Instant now) {
         String sub = String.valueOf(principal.id());
-        Instant now = getNow();
         Instant expiresAt = now.plusMillis(refreshTokenTTLMs);
-        return JwtUtils.encode(sub, secretKey, now, expiresAt);
+        String refresh = JwtUtils.encode(sub, secretKey, now, expiresAt);
+        return new IssuedToken(sub, refresh, expiresAt);
     }
 
     public Claims parseClaims(String token) throws JwtException {
         return JwtUtils.decode(token, secretKey);
-    }
-
-    private Instant getNow() {
-        return Instant.now(clock);
     }
 }

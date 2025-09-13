@@ -44,14 +44,14 @@ class ApiLoginFilterTest {
     private LoginAuthenticationFailureHandler failureHandler;
 
     private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
-    private static final String REQUEST_URI = ApiPathsUtils.auth("login");
+    private static final String REQUEST_PATH = ApiPathsUtils.auth("login");
 
     @BeforeEach
     void setUp() {
         apiLoginFilter = new ApiLoginFilter(objectMapper);
         apiLoginFilter.setAuthenticationManager(providerManager);
         apiLoginFilter.setRequiresAuthenticationRequestMatcher(
-                PathPatternRequestMatcher.withDefaults().matcher(REQUEST_URI));
+                PathPatternRequestMatcher.withDefaults().matcher(REQUEST_PATH));
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
         apiLoginFilter.setAuthenticationFailureHandler(failureHandler);
     }
@@ -140,21 +140,21 @@ class ApiLoginFilterTest {
     private MockHttpServletRequest createRequest(HttpMethod method, String username, String password) {
         return TestRequestBuilder.json()
                 .method(method)
-                .uri(REQUEST_URI)
+                .uri(REQUEST_PATH)
                 .body(new TestUser(username, password), objectMapper)
                 .build();
     }
 
     private MockHttpServletRequest createRequest(String username, String password) {
         return TestRequestBuilder.json()
-                .post(REQUEST_URI)
+                .post(REQUEST_PATH)
                 .body(new TestUser(username, password), objectMapper)
                 .build();
     }
 
     private MockHttpServletRequest createRequest(String json) {
         return TestRequestBuilder.json()
-                .post(REQUEST_URI)
+                .post(REQUEST_PATH)
                 .body(json)
                 .build();
     }

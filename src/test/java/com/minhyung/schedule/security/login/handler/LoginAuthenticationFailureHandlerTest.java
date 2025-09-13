@@ -42,10 +42,9 @@ class LoginAuthenticationFailureHandlerTest {
 
     @BeforeEach
     void setUp() {
-        failureHandler = new LoginAuthenticationFailureHandler();
-        failureHandler.setObjectMapper(objectMapper);
-        request = new MockHttpServletRequest();
-        response = new MockHttpServletResponse();
+        this.failureHandler = new LoginAuthenticationFailureHandler(objectMapper);
+        this.request = new MockHttpServletRequest();
+        this.response = new MockHttpServletResponse();
     }
 
     @ParameterizedTest
@@ -67,7 +66,7 @@ class LoginAuthenticationFailureHandlerTest {
     @Test
     void post_요청이_아닌_경우() throws IOException {
         // given
-        MethodNotAllowedException exception = new MethodNotAllowedException("");
+        MethodNotAllowedException exception = new MethodNotAllowedException("", HttpMethod.POST.name());
 
         // when
         failureHandler.onAuthenticationFailure(request, response, exception);

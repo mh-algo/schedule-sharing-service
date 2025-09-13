@@ -2,6 +2,7 @@ package com.minhyung.schedule.auth.repository;
 
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserStatusDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,5 +18,12 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
         from UserEntity u
         where u.username = :username and u.deletedAt is null
     """)
-    Optional<UserInfoDto> findByUsername(String username);
+    Optional<UserInfoDto> findByUsername(@Param("username") String username);
+
+    @Query("""
+        select new com.minhyung.schedule.auth.dto.UserStatusDto(u.id, u.status)
+        from UserEntity u
+        where u.id = :id and u.deletedAt is null
+    """)
+    Optional<UserStatusDto> findByUserId(@Param("id") Long id);
 }

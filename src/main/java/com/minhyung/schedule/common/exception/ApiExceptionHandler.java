@@ -7,11 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
@@ -78,6 +80,22 @@ public class ApiExceptionHandler {
         String errorMessage = String.format(ValidationErrorCode.MISSING_REQUIRED_PARAM.getMessage(), e.getParameterName());
         log.warn("MissingServletRequestParameterException: {}", errorMessage);
         return ApiResult.error(ValidationErrorCode.MISSING_REQUIRED_PARAM, errorMessage);
+    }
+
+    // 지원하지 않는 경로
+    @ExceptionHandler(value = NoHandlerFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResult<Void> handleNoHandlerFoundException(NoHandlerFoundException e) {
+        log.warn("NoHandlerFoundException: {}", e.getMessage());
+        return ApiResult.error(ClientErrorCode.NOT_FOUND);
+    }
+
+    // 지원하지 않는 메서드
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ApiResult<Void> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        log.warn("HttpRequestMethodNotSupportedException: {}", e.getMessage());
+        return ApiResult.error(ClientErrorCode.METHOD_NOT_ALLOWED);
     }
 
     // 무결성 제약조건 위반

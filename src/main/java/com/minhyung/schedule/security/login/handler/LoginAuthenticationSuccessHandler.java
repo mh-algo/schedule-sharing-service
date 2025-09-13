@@ -18,13 +18,10 @@ import java.nio.charset.StandardCharsets;
 
 public class LoginAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtService jwtService;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    public LoginAuthenticationSuccessHandler(JwtService jwtService) {
+    public LoginAuthenticationSuccessHandler(JwtService jwtService, ObjectMapper objectMapper) {
         this.jwtService = jwtService;
-    }
-
-    public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
@@ -32,7 +29,7 @@ public class LoginAuthenticationSuccessHandler implements AuthenticationSuccessH
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal userPrincipal) {
-            JwtToken jwtToken = jwtService.createJwtToken(userPrincipal);
+            JwtToken jwtToken = jwtService.issueJwtToken(userPrincipal);
             writeLoginSuccessResponse(response, jwtToken);
         } else {
             throw new InternalAuthenticationServiceException("Unexpected principal type");

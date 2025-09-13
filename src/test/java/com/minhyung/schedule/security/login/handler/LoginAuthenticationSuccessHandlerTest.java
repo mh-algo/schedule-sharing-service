@@ -14,7 +14,6 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -37,7 +36,6 @@ import static org.mockito.Mockito.when;
 class LoginAuthenticationSuccessHandlerTest {
     private static final ObjectMapper objectMapper = TestObjectMapper.getInstance();
 
-    @InjectMocks
     private LoginAuthenticationSuccessHandler successHandler;
 
     @Mock
@@ -45,7 +43,7 @@ class LoginAuthenticationSuccessHandlerTest {
 
     @BeforeEach
     void setUp() {
-        successHandler.setObjectMapper(objectMapper);
+        this.successHandler = new LoginAuthenticationSuccessHandler(jwtService, objectMapper);
     }
 
     @Test
@@ -57,7 +55,7 @@ class LoginAuthenticationSuccessHandlerTest {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         JwtToken jwtToken = TestToken.tokens();
 
-        when(jwtService.createJwtToken(principal)).thenReturn(jwtToken);
+        when(jwtService.issueJwtToken(principal)).thenReturn(jwtToken);
 
         // when
         successHandler.onAuthenticationSuccess(request, response, authentication);

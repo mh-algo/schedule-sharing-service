@@ -1,8 +1,7 @@
 package com.minhyung.schedule.security.testsupport;
 
 import com.minhyung.schedule.security.login.LoginUserDetails;
-import com.minhyung.schedule.security.login.dto.LoginUserInfo;
-import com.minhyung.schedule.security.principal.UserPrincipal;
+import com.minhyung.schedule.security.principal.UserPrincipalMapper;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 public final class TestLoginAuthenticationToken {
@@ -26,12 +25,6 @@ public final class TestLoginAuthenticationToken {
 
     public static UsernamePasswordAuthenticationToken authenticated(LoginUserDetails userDetails) {
         return UsernamePasswordAuthenticationToken.authenticated(
-                toUserPrincipal(userDetails), null, userDetails.getAuthorities());
-    }
-
-    private static UserPrincipal toUserPrincipal(LoginUserDetails userDetails) {
-        LoginUserInfo account = userDetails.getUserInfo();
-        boolean verified = !userDetails.isUnverified();
-        return new UserPrincipal(account.id(), verified);
+                UserPrincipalMapper.from(userDetails), null, userDetails.getAuthorities());
     }
 }
