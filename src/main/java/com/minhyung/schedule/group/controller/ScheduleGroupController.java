@@ -26,8 +26,8 @@ public class ScheduleGroupController implements ScheduleGroupApiDocs {
     private final ScheduleGroupService scheduleGroupService;
 
     @PostMapping
-    public ResponseEntity<ApiResult<CreateGroupResponse>> create(@AuthenticationPrincipal UserPrincipal principal,
-                                                  @RequestBody @Valid CreateGroupRequest request) {
+        public ResponseEntity<ApiResult<CreateGroupResponse>> create(@AuthenticationPrincipal UserPrincipal principal,
+                                                                     @RequestBody @Valid CreateGroupRequest request) {
         CreateGroupResponse response = scheduleGroupService.create(principal.id(), request);
         return ResponseEntity.created(URI.create(ApiPathsUtils.group(response.id())))
                 .body(ApiResult.created("그룹 생성이 완료되었습니다.", response));
