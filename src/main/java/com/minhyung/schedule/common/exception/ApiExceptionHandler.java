@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -90,6 +91,14 @@ public class ApiExceptionHandler {
         String errorMessage = String.format(ClientErrorCode.MISSING_REQUEST_HEADER.getMessage(), e.getHeaderName());
         log.warn("MissingRequestHeaderException: {}", errorMessage);
         return ApiResult.error(ClientErrorCode.MISSING_REQUEST_HEADER, errorMessage);
+    }
+
+    // request body x
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResult<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("HttpMessageNotReadableException: {}", e.getMessage());
+        return ApiResult.error(ClientErrorCode.MISSING_REQUEST_BODY);
     }
 
     // 지원하지 않는 경로
