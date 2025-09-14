@@ -5,9 +5,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @EnableJpaAuditing
 @EnableScheduling
+@EnableMethodSecurity
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class ScheduleSharingServiceApplication {
 

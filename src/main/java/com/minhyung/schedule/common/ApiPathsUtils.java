@@ -5,6 +5,10 @@ public final class ApiPathsUtils {
         return join(ApiPaths.AUTH, segments);
     }
 
+    public static String group(Object... segments) {
+        return join(ApiPaths.GROUP, segments);
+    }
+
     public static String join(String base, Object... segments) {
         if (base == null || base.isBlank()) {
             throw new IllegalArgumentException("base must not be blank");

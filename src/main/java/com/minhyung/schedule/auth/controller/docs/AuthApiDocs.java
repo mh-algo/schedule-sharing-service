@@ -1,6 +1,7 @@
 package com.minhyung.schedule.auth.controller.docs;
 
 import com.minhyung.schedule.auth.dto.SignupRequest;
+import com.minhyung.schedule.auth.dto.SignupResponse;
 import com.minhyung.schedule.common.ApiResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -29,7 +30,13 @@ public interface AuthApiDocs {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schemaProperties = {
                                     @SchemaProperty(name= "status", schema = @Schema(type = "integer", example = "201")),
-                                    @SchemaProperty(name= "message", schema = @Schema(type = "string", example = "회원가입이 완료되었습니다."))
+                                    @SchemaProperty(name= "message", schema = @Schema(type = "string", example = "회원가입이 완료되었습니다.")),
+                                    @SchemaProperty(name= "data", schema = @Schema(type = "object", example = """
+                                            {
+                                                "id": 1,
+                                                "username": "username"
+                                            }
+                                            """))
                             }
                     )
             ),
@@ -37,7 +44,7 @@ public interface AuthApiDocs {
             @ApiResponse(responseCode = "409", description = "SIGNUP_001", content = @Content),
             @ApiResponse(responseCode = "500", description = "SERVER_001", content = @Content)
     })
-    ResponseEntity<ApiResult<Void>> signup(SignupRequest request);
+    ResponseEntity<ApiResult<SignupResponse>> signup(SignupRequest request);
 
     @Operation(summary = "로그인", description = "사용자로부터 아이디와 비밀번호를 입력받아 로그인합니다.")
     @SecurityRequirements

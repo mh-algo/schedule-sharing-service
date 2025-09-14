@@ -24,10 +24,10 @@ public class AuthController implements AuthApiDocs {
     private final LogoutService logoutService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResult<Void>> signup(@RequestBody @Valid SignupRequest request) {
+    public ResponseEntity<ApiResult<SignupResponse>> signup(@RequestBody @Valid SignupRequest request) {
         SignupResponse response = signupService.signup(request);
         return ResponseEntity.created(URI.create(ApiPathsUtils.auth(response.id())))
-                .body(ApiResult.created("회원가입이 완료되었습니다."));
+                .body(ApiResult.created("회원가입이 완료되었습니다.", response));
     }
 
     @PostMapping("/logout")
