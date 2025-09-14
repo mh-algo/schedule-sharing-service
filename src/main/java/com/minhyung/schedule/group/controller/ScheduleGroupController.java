@@ -3,6 +3,7 @@ package com.minhyung.schedule.group.controller;
 import com.minhyung.schedule.common.ApiPaths;
 import com.minhyung.schedule.common.ApiPathsUtils;
 import com.minhyung.schedule.common.ApiResult;
+import com.minhyung.schedule.group.controller.docs.ScheduleGroupApiDocs;
 import com.minhyung.schedule.group.dto.CreateGroupRequest;
 import com.minhyung.schedule.group.dto.CreateGroupResponse;
 import com.minhyung.schedule.group.service.ScheduleGroupService;
@@ -21,7 +22,7 @@ import java.net.URI;
 @RestController
 @RequestMapping(ApiPaths.GROUP)
 @RequiredArgsConstructor
-public class ScheduleGroupController {
+public class ScheduleGroupController implements ScheduleGroupApiDocs {
     private final ScheduleGroupService scheduleGroupService;
 
     @PostMapping
