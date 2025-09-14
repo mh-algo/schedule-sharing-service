@@ -1,6 +1,6 @@
 package com.minhyung.schedule.auth;
 
-import com.minhyung.schedule.AuthenticatedTest;
+import com.minhyung.schedule.AuthenticatedIntegrationTest;
 import com.minhyung.schedule.common.ApiPathsUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class LogoutIntegrationTest extends AuthenticatedTest {
+public class LogoutIntegrationTest extends AuthenticatedIntegrationTest {
     private static final String REQUEST_PATH = ApiPathsUtils.auth("logout");
 
     @Autowired
