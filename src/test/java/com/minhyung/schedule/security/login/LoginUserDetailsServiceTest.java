@@ -1,10 +1,10 @@
 package com.minhyung.schedule.security.login;
 
-import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserLoginDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
-import com.minhyung.schedule.security.testsupport.TestUserInfoDtoBuilder;
+import com.minhyung.schedule.security.testsupport.TestUserLoginDtoBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,9 +29,9 @@ class LoginUserDetailsServiceTest {
     void 사용자_정보_조회_후_UserDetails_반환() {
         // given
         String username = "username";
-        UserInfoDto userInfoDto = TestUserInfoDtoBuilder.user().build();
+        UserLoginDto userLoginDto = TestUserLoginDtoBuilder.user().build();
 
-        when(userService.getUserInfo(username)).thenReturn(userInfoDto);
+        when(userService.getUserLogin(username)).thenReturn(userLoginDto);
 
         // when
         UserDetails result = loginUserDetailsService.loadUserByUsername(username);
@@ -40,10 +40,10 @@ class LoginUserDetailsServiceTest {
         assertThat(result).isInstanceOf(LoginUserDetails.class);
         LoginUserDetails userDetails = (LoginUserDetails) result;
         LoginUserInfo loginUserInfo = userDetails.getUserInfo();
-        assertThat(loginUserInfo.id()).isEqualTo(userInfoDto.id());
-        assertThat(loginUserInfo.username()).isEqualTo(userInfoDto.username());
-        assertThat(loginUserInfo.password()).isEqualTo(userInfoDto.password());
-        assertThat(loginUserInfo.status()).isEqualTo(userInfoDto.status());
+        assertThat(loginUserInfo.id()).isEqualTo(userLoginDto.id());
+        assertThat(loginUserInfo.username()).isEqualTo(userLoginDto.username());
+        assertThat(loginUserInfo.password()).isEqualTo(userLoginDto.password());
+        assertThat(loginUserInfo.status()).isEqualTo(userLoginDto.status());
     }
 
     @Test
@@ -51,7 +51,7 @@ class LoginUserDetailsServiceTest {
         // given
         String username = "username";
 
-        when(userService.getUserInfo(username)).thenThrow(new UserNotFoundException("User not found: " + username));
+        when(userService.getUserLogin(username)).thenThrow(new UserNotFoundException("User not found: " + username));
 
         // when
         ThrowingCallable action = () -> loginUserDetailsService.loadUserByUsername(username);

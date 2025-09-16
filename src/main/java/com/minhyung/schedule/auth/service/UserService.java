@@ -1,6 +1,6 @@
 package com.minhyung.schedule.auth.service;
 
-import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserLoginDto;
 import com.minhyung.schedule.auth.dto.UserStatusDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.repository.UserRepository;
@@ -14,7 +14,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public UserInfoDto getUserInfo(String username) {
+    public UserLoginDto getUserLogin(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
     }

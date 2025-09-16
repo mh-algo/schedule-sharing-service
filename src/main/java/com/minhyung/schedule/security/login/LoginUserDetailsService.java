@@ -1,6 +1,6 @@
 package com.minhyung.schedule.security.login;
 
-import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserLoginDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.security.login.dto.LoginUserInfo;
@@ -24,14 +24,14 @@ public class LoginUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            UserInfoDto userInfo = userService.getUserInfo(username);
+            UserLoginDto userInfo = userService.getUserLogin(username);
             return new LoginUserDetails(toLoginUserInfo(userInfo), DEFAULT_AUTHORITIES);
         } catch (UserNotFoundException e) {
             throw new UsernameNotFoundException(e.getMessage());
         }
     }
 
-    private static LoginUserInfo toLoginUserInfo(UserInfoDto userInfo) {
+    private static LoginUserInfo toLoginUserInfo(UserLoginDto userInfo) {
         return LoginUserInfo.builder()
                 .id(userInfo.id())
                 .username(userInfo.username())
