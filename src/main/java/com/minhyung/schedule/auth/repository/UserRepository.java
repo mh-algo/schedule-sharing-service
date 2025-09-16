@@ -18,12 +18,14 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
         from UserEntity u
         where u.username = :username and u.deletedAt is null
     """)
-    Optional<UserLoginDto> findByUsername(@Param("username") String username);
+    Optional<UserLoginDto> findUserLoginByUsername(@Param("username") String username);
 
     @Query("""
         select new com.minhyung.schedule.auth.dto.UserStatusDto(u.id, u.status)
         from UserEntity u
         where u.id = :id and u.deletedAt is null
     """)
-    Optional<UserStatusDto> findByUserId(@Param("id") Long id);
+    Optional<UserStatusDto> findUserStatusById(@Param("id") Long id);
+
+    Optional<UserEntity> findByUsername(String username);
 }
