@@ -31,7 +31,7 @@ class UserServiceTest {
         String username = "username";
         UserLoginDto userLoginDto = TestUserLoginDtoBuilder.user().build();
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(userLoginDto));
+        when(userRepository.findUserLoginByUsername(username)).thenReturn(Optional.of(userLoginDto));
 
         // when
         UserLoginDto result = userService.getUserLogin(username);
@@ -45,7 +45,7 @@ class UserServiceTest {
         // given
         String username = "username";
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        when(userRepository.findUserLoginByUsername(username)).thenReturn(Optional.empty());
 
         // when
         ThrowingCallable action = () -> userService.getUserLogin(username);

@@ -4,7 +4,7 @@ import com.minhyung.schedule.auth.domain.UserInfo;
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
-import com.minhyung.schedule.auth.exception.SignupErrorCode;
+import com.minhyung.schedule.auth.exception.UserServiceErrorCode;
 import com.minhyung.schedule.auth.repository.UserRepository;
 import com.minhyung.schedule.common.exception.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class SignupService {
     private void validateUniqueUsername(String username) {
         userRepository.existsByUsername(username)
                 .ifPresent(exist -> {
-                    throw new ApiException(SignupErrorCode.DUPLICATED_USERNAME);
+                    throw new ApiException(UserServiceErrorCode.DUPLICATED_USERNAME);
                 });
     }
 }
