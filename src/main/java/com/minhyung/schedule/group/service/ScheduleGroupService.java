@@ -13,6 +13,7 @@ import com.minhyung.schedule.group.domain.entity.GroupMemberEntity;
 import com.minhyung.schedule.group.dto.CreateGroupRequest;
 import com.minhyung.schedule.group.dto.CreateGroupResponse;
 import com.minhyung.schedule.group.dto.InviteUserRequest;
+import com.minhyung.schedule.group.exception.GroupErrorCode;
 import com.minhyung.schedule.group.repository.GroupInviteRepository;
 import com.minhyung.schedule.group.repository.GroupMemberRepository;
 import com.minhyung.schedule.group.repository.GroupRepository;
@@ -60,16 +61,23 @@ public class ScheduleGroupService {
         try {
             // 초대 그룹
             GroupEntity group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new ApiException(UserServiceErrorCode.USER_NOT_FOUND));
-
-            // TODO: inviter가 그룹 소속인지 검증
-            // TODO: invitee가 그룹 소속이 아닌지 검증
+                    .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
 
             // 초대한 사람
             UserEntity inviter = userService.getUserEntity(id);
 
+            // 초대한 사람이 그룹 소속인지 검증
+            groupMemberRepository.existsByUserId(inviter.getId())
+                    .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
+
             // 초대 받는 사람
             UserEntity invitee = userService.getUserEntity(request.username());
+
+            // 초대 받는 사람이 그룹 소속이 아닌지 검증
+            groupMemberRepository.existsByUserId(invitee.getId())
+                    .ifPresent(inviteeExists -> {
+                        throw new ApiException(GroupErrorCode.USER_ALREADY_EXISTS);
+                    });
 
             // 그룹 초대 생성
             GroupInviteEntity entity = GroupInviteEntity.builder()
