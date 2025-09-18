@@ -6,12 +6,15 @@ import com.minhyung.schedule.auth.exception.UserServiceErrorCode;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.exception.ApiException;
 import com.minhyung.schedule.group.domain.GroupInviteStatus;
+import com.minhyung.schedule.group.domain.GroupMemberRoleType;
 import com.minhyung.schedule.group.domain.entity.GroupEntity;
 import com.minhyung.schedule.group.domain.entity.GroupInviteEntity;
+import com.minhyung.schedule.group.domain.entity.GroupMemberEntity;
 import com.minhyung.schedule.group.dto.CreateGroupRequest;
 import com.minhyung.schedule.group.dto.CreateGroupResponse;
 import com.minhyung.schedule.group.dto.InviteUserRequest;
 import com.minhyung.schedule.group.repository.GroupInviteRepository;
+import com.minhyung.schedule.group.repository.GroupMemberRepository;
 import com.minhyung.schedule.group.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,15 +26,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class ScheduleGroupService {
     private final GroupRepository groupRepository;
     private final GroupInviteRepository groupInviteRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final UserService userService;
 
     @Transactional
     @PreAuthorize("isAuthenticated() and authentication.principal.id == #id")
     public CreateGroupResponse create(Long id, CreateGroupRequest request) {
-        // 그룹 생성
-        GroupEntity groupEntity = GroupEntity.createNew(id, request.name());
-        GroupEntity savedGroupEntity = groupRepository.save(groupEntity);
-        return new CreateGroupResponse(savedGroupEntity.getId(), savedGroupEntity.getOwnerId(), savedGroupEntity.getName());
+        try {
+            // 그룹 생성자
+            UserEntity owner = userService.getUserEntity(id);
+
+            // 그룹 생성
+            GroupEntity group = GroupEntity.createNew(owner, request.name());
+            GroupEntity savedGroupEntity = groupRepository.save(group);
+
+            // 그룹원 등록
+            GroupMemberEntity member = GroupMemberEntity.builder()
+                    .group(group)
+                    .user(owner)
+                    .role(GroupMemberRoleType.OWNER)
+                    .build();
+            groupMemberRepository.save(member);
+
+            return new CreateGroupResponse(savedGroupEntity.getId(), savedGroupEntity.getOwner().getId(), savedGroupEntity.getName());
+        } catch (UserNotFoundException e) {
+            throw new ApiException(UserServiceErrorCode.USER_NOT_FOUND);
+        }
     }
 
     @Transactional
