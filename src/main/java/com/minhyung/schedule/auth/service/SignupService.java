@@ -23,12 +23,13 @@ public class SignupService {
         // password 암호화
         UserInfo userInfo = UserInfo.fromRaw(request.username(), request.password(), passwordEncoder);
 
-        validateUniqueUsername(userInfo.getUsername());     // username unique 검증
+        validateUniqueUsername(userInfo.getUsername());
         UserEntity userEntity = UserEntity.createNew(userInfo.getUsername(), userInfo.getPassword());
         UserEntity savedUserEntity = userRepository.save(userEntity);
         return new SignupResponse(savedUserEntity.getId(), savedUserEntity.getUsername());
     }
 
+    // username unique 검증
     private void validateUniqueUsername(String username) {
         userRepository.existsByUsername(username)
                 .ifPresent(exist -> {

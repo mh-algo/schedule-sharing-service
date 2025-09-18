@@ -23,6 +23,7 @@ import java.net.URI;
 public class ScheduleGroupController implements ScheduleGroupApiDocs {
     private final ScheduleGroupService scheduleGroupService;
 
+    // 그룹 생성
     @PostMapping
     public ResponseEntity<ApiResult<CreateGroupResponse>> create(@AuthenticationPrincipal UserPrincipal principal,
                                                                  @RequestBody @Valid CreateGroupRequest request) {
@@ -31,6 +32,7 @@ public class ScheduleGroupController implements ScheduleGroupApiDocs {
                 .body(ApiResult.created("그룹 생성이 완료되었습니다.", response));
     }
 
+    // 그룹 초대
     @PostMapping("{groupId}/invite")
     public ResponseEntity<ApiResult<Void>> invite(@AuthenticationPrincipal UserPrincipal principal,
                                                   @PathVariable Long groupId, @RequestBody @Valid InviteUserRequest request) {

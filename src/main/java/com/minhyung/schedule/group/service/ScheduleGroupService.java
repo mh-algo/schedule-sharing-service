@@ -28,6 +28,7 @@ public class ScheduleGroupService {
     @Transactional
     @PreAuthorize("isAuthenticated() and authentication.principal.id == #id")
     public CreateGroupResponse create(Long id, CreateGroupRequest request) {
+        // 그룹 생성
         GroupEntity groupEntity = GroupEntity.createNew(id, request.name());
         GroupEntity savedGroupEntity = groupRepository.save(groupEntity);
         return new CreateGroupResponse(savedGroupEntity.getId(), savedGroupEntity.getOwnerId(), savedGroupEntity.getName());

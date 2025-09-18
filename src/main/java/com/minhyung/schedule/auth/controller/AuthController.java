@@ -23,6 +23,7 @@ public class AuthController implements AuthApiDocs {
     private final SignupService signupService;
     private final LogoutService logoutService;
 
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResult<SignupResponse>> signup(@RequestBody @Valid SignupRequest request) {
         SignupResponse response = signupService.signup(request);
@@ -30,6 +31,7 @@ public class AuthController implements AuthApiDocs {
                 .body(ApiResult.created("회원가입이 완료되었습니다.", response));
     }
 
+    // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<ApiResult<Void>> logout(@RequestHeader(JwtHeader.REFRESH_TOKEN) String refreshHeader) {
         logoutService.logout(refreshHeader);
