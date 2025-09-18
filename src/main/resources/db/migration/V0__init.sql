@@ -21,7 +21,7 @@ CREATE TABLE `groups` (
     CONSTRAINT fk_groups_owner_id FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`)
 );
 
-CREATE TABLE `members` (
+CREATE TABLE `group_members` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
     `group_id`	BIGINT	NOT NULL,
     `user_id`	BIGINT	NOT NULL,
@@ -30,8 +30,8 @@ CREATE TABLE `members` (
     `updated_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP   ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at`	TIMESTAMP	NULL,
     PRIMARY KEY (`id`),
-    CONSTRAINT fk_members_group_id FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`),
-    CONSTRAINT fk_members_user_id FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+    CONSTRAINT fk_group_members_group_id FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`),
+    CONSTRAINT fk_group_members_user_id FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
 );
 
 CREATE TABLE `schedules` (
@@ -55,7 +55,7 @@ CREATE TABLE `schedule_members` (
     `attend`	TINYINT	NOT NULL	DEFAULT 1	COMMENT '0: DECLINED, 1: ACCEPTED',
     PRIMARY KEY (`id`),
     CONSTRAINT fk_schedule_members_schedule_id FOREIGN KEY (`schedule_id`) REFERENCES `schedules`(`id`),
-    CONSTRAINT fk_schedule_members_member_id FOREIGN KEY (`member_id`) REFERENCES `members`(`id`)
+    CONSTRAINT fk_schedule_members_member_id FOREIGN KEY (`member_id`) REFERENCES `group_members`(`id`)
 );
 
 CREATE TABLE `group_invites` (
@@ -121,7 +121,7 @@ CREATE TABLE `group_activity_logs` (
     `created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     CONSTRAINT fk_group_activity_logs_group_id FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`),
-    CONSTRAINT fk_group_activity_logs_actor_user_id FOREIGN KEY (`actor_user_id`) REFERENCES `members`(`id`),
-    CONSTRAINT fk_group_activity_logs_target_user_id FOREIGN KEY (`target_user_id`) REFERENCES `members`(`id`),
+    CONSTRAINT fk_group_activity_logs_actor_user_id FOREIGN KEY (`actor_user_id`) REFERENCES `group_members`(`id`),
+    CONSTRAINT fk_group_activity_logs_target_user_id FOREIGN KEY (`target_user_id`) REFERENCES `group_members`(`id`),
     CONSTRAINT fk_group_activity_logs_target_schedule_id FOREIGN KEY (`target_schedule_id`) REFERENCES `schedules`(`id`)
 );
