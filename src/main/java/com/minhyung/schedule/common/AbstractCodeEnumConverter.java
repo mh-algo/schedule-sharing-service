@@ -22,12 +22,12 @@ public abstract class AbstractCodeEnumConverter<T extends Enum<T> & CodeEnum<C>,
 
     @Override
     public C convertToDatabaseColumn(T type) {
-        return Objects.requireNonNull(type, clazz.getName() + " is null").getCode();
+        return Objects.requireNonNull(type, clazz.getSimpleName() + " is null").getCode();
     }
 
     @Override
     public T convertToEntityAttribute(C code) {
         Objects.requireNonNull(code, "code is null");
-        return Objects.requireNonNull(codeEnumMap.get(code), "Invalid code! Not Found " + clazz.getName());
+        return Objects.requireNonNull(codeEnumMap.get(code), "Invalid code! Not Found " + clazz.getSimpleName());
     }
 }

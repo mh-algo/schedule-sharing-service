@@ -14,10 +14,14 @@ import com.minhyung.schedule.group.dto.CreateGroupRequest;
 import com.minhyung.schedule.group.dto.CreateGroupResponse;
 import com.minhyung.schedule.group.dto.InviteUserRequest;
 import com.minhyung.schedule.group.exception.GroupErrorCode;
+import com.minhyung.schedule.notification.domain.Inviter;
+import com.minhyung.schedule.notification.domain.NotificationType;
+import com.minhyung.schedule.notification.event.InvitationCreatedEvent;
 import com.minhyung.schedule.group.repository.GroupInviteRepository;
 import com.minhyung.schedule.group.repository.GroupMemberRepository;
 import com.minhyung.schedule.group.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,7 @@ public class ScheduleGroupService {
     private final GroupInviteRepository groupInviteRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @PreAuthorize("isAuthenticated() and authentication.principal.id == #id")
@@ -58,38 +63,55 @@ public class ScheduleGroupService {
     @Transactional
     @PreAuthorize("isAuthenticated() and authentication.principal.id == #id")
     public void invite(Long id, Long groupId, InviteUserRequest request) {
+        // 초대 그룹
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
+
+        // 초대한 사람
+        UserEntity inviter = userService.getUserEntity(id);
+
+        // 초대한 사람이 그룹 소속인지 검증
+        groupMemberRepository.existsByUserId(inviter.getId())
+                .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
+
+        // 초대 받는 사람
+        UserEntity invitee;
         try {
-            // 초대 그룹
-            GroupEntity group = groupRepository.findById(groupId)
-                    .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
-
-            // 초대한 사람
-            UserEntity inviter = userService.getUserEntity(id);
-
-            // 초대한 사람이 그룹 소속인지 검증
-            groupMemberRepository.existsByUserId(inviter.getId())
-                    .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
-
-            // 초대 받는 사람
-            UserEntity invitee = userService.getUserEntity(request.username());
-
-            // 초대 받는 사람이 그룹 소속이 아닌지 검증
-            groupMemberRepository.existsByUserId(invitee.getId())
-                    .ifPresent(inviteeExists -> {
-                        throw new ApiException(GroupErrorCode.USER_ALREADY_EXISTS);
-                    });
-
-            // 그룹 초대 생성
-            GroupInviteEntity entity = GroupInviteEntity.builder()
-                    .groupId(group)
-                    .inviterId(inviter)
-                    .inviteeId(invitee)
-                    .status(GroupInviteStatus.PENDING)
-                    .build();
-
-            groupInviteRepository.save(entity);
+            invitee = userService.getUserEntity(request.username());
         } catch (UserNotFoundException e) {
             throw new ApiException(UserServiceErrorCode.USER_NOT_FOUND);
         }
+
+        // 초대 받는 사람이 그룹 소속이 아닌지 검증
+        groupMemberRepository.existsByUserId(invitee.getId())
+                .ifPresent(inviteeExists -> {
+                    throw new ApiException(GroupErrorCode.USER_ALREADY_EXISTS);
+                });
+
+        // TODO: invitee가 그룹 초대 상태인지 확인(초대가 만료되지 않았고, 응답하지 않은 경우 초대 x)
+
+        // 그룹 초대 생성
+        GroupInviteEntity entity = GroupInviteEntity.builder()
+                .group(group)
+                .inviter(inviter)
+                .invitee(invitee)
+                .status(GroupInviteStatus.PENDING)
+                .build();
+
+        GroupInviteEntity invite = groupInviteRepository.save(entity);
+
+        // 초대 알림 이벤트 발행
+        InvitationCreatedEvent event = InvitationCreatedEvent.builder()
+                .type(NotificationType.INVITE_CREATED)
+                .id(invite.getId())                                                 // 생성된 group_invites id
+                .groupId(group.getId())                                             // 초대된 group id
+                .groupName(group.getName())                                         // 초대된 groupName
+                .inviter(new Inviter(inviter.getId(), inviter.getUsername()))       // 초대한 사람
+                .inviteeId(invitee.getId())                                         // 초대된 사람
+                .createdAt(invite.getCreatedAt())
+                .expiresAt(invite.getExpiresAt())
+                .build();
+
+        eventPublisher.publishEvent(event);
     }
 }

@@ -23,15 +23,15 @@ public class GroupInviteEntity extends CreatedOnly {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
-    private GroupEntity groupId;
+    private GroupEntity group;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inviter_id")
-    private UserEntity inviterId;
+    private UserEntity inviter;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invitee_id")
-    private UserEntity inviteeId;
+    private UserEntity invitee;
 
     @Convert(converter = GroupInviteStatusConverter.class)
     private GroupInviteStatus status;
@@ -39,11 +39,19 @@ public class GroupInviteEntity extends CreatedOnly {
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
 
+    @Column(name = "expires_at", updatable = false, nullable = false)
+    private LocalDateTime expiresAt;
+
+    @PrePersist
+    private void onCreate() {
+        this.expiresAt = getCreatedAt().plusDays(7);
+    }
+
     @Builder
-    private GroupInviteEntity(GroupEntity groupId, UserEntity inviterId, UserEntity inviteeId, GroupInviteStatus status) {
-        this.groupId = groupId;
-        this.inviterId = inviterId;
-        this.inviteeId = inviteeId;
+    private GroupInviteEntity(GroupEntity group, UserEntity inviter, UserEntity invitee, GroupInviteStatus status) {
+        this.group = group;
+        this.inviter = inviter;
+        this.invitee = invitee;
         this.status = status;
     }
 }

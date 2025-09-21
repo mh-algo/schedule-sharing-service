@@ -66,23 +66,25 @@ CREATE TABLE `group_invites` (
     `status`	TINYINT	NOT NULL	DEFAULT 0	COMMENT '0: PENDING, 1: ACCEPTED, 2: DECLINED',
     `created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
     `responded_at`	TIMESTAMP	NULL,
+    `expires_at`    TIMESTAMP   NOT NULL    DEFAULT (DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)),
     PRIMARY KEY (`id`),
     CONSTRAINT fk_group_invites_group_id FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`),
     CONSTRAINT fk_group_invites_inviter_id FOREIGN KEY (`inviter_id`) REFERENCES `users`(`id`),
     CONSTRAINT fk_group_invites_invitee_id FOREIGN KEY (`invitee_id`) REFERENCES `users`(`id`)
 );
 
-CREATE TABLE `notifications` (
+CREATE TABLE `notification_messages` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
     `type`	TINYINT	NOT NULL,
     `title`	VARCHAR(50)	NOT NULL,
     `message`	VARCHAR(256)	NOT NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY uk_type (`type`)
 );
 
-CREATE TABLE `notification_receivers` (
+CREATE TABLE `notifications` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
-    `notification_id`	BIGINT	NOT NULL,
+    `message_id`	BIGINT	NOT NULL,
     `receiver_id`	BIGINT	NOT NULL,
     `target_type`	TINYINT	NOT NULL,
     `target_id`	BIGINT	NOT NULL	COMMENT 'type에 해당하는 id',
@@ -92,22 +94,22 @@ CREATE TABLE `notification_receivers` (
     `read_at`   TIMESTAMP	NULL,
     `deleted_at`	TIMESTAMP	NULL,
     PRIMARY KEY (`id`),
-    CONSTRAINT fk_notification_receivers_notification_id FOREIGN KEY (`notification_id`) REFERENCES `notifications`(`id`),
-    CONSTRAINT fk_notification_receivers_receiver_id FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`),
+    CONSTRAINT fk_notifications_message_id FOREIGN KEY (`message_id`) REFERENCES `notification_messages`(`id`),
+    CONSTRAINT fk_notifications_receiver_id FOREIGN KEY (`receiver_id`) REFERENCES `users`(`id`),
     UNIQUE KEY uk_identify_notification (`receiver_id`, `target_type`, `target_id`)
 );
 
 CREATE TABLE `notification_sending` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
-    `notification_receiver_id`	BIGINT	NOT NULL,
-    `status`	TINYINT	NOT NULL    DEFAULT 0	COMMENT '0: PENDING, 1: IN_QUEUE, 2: IN_PROGRESS, 3: SENT, 4: FAILED,5: CANCELLED',
+    `notification_id`	BIGINT	NOT NULL,
+    `status`	TINYINT	NOT NULL    DEFAULT 0	COMMENT '0: PENDING, 1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED',
     `attempt`	INT	NOT NULL    DEFAULT 0,
     `next_push_at`	TIMESTAMP	NULL,
-    `version`	INT	NOT NULL    DEFAULT 0,
+    `created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
     `updated_at`   TIMESTAMP	NULL    DEFAULT CURRENT_TIMESTAMP   ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    CONSTRAINT fk_notification_sending_notification_receiver_id FOREIGN KEY (`notification_receiver_id`) REFERENCES `notification_receivers`(`id`),
-    UNIQUE KEY uk_notification_receiver_id (`notification_receiver_id`)
+    CONSTRAINT fk_notification_sending_notification_id FOREIGN KEY (`notification_id`) REFERENCES `notifications`(`id`),
+    UNIQUE KEY uk_notification_id (`notification_id`)
 );
 
 CREATE TABLE `group_activity_logs` (
