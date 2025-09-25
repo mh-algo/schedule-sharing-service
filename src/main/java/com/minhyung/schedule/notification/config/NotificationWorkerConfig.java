@@ -1,5 +1,6 @@
 package com.minhyung.schedule.notification.config;
 
+import com.minhyung.schedule.notification.domain.QueueMessage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -24,7 +25,7 @@ public class NotificationWorkerConfig {
     }
 
     @Bean
-    BlockingQueue<Long> notificationQueue() {
+    BlockingQueue<QueueMessage> notificationQueue() {
         return new LinkedBlockingQueue<>(50000);
     }
 }

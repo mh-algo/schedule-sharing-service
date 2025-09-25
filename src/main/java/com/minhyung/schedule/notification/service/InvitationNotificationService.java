@@ -29,7 +29,7 @@ public class InvitationNotificationService implements NotificationService {
 
     @Transactional
     @Override
-    public void create(NotificationData data) {
+    public Long createNotification(NotificationData data) {
         // 메시지 조회
         NotificationMessageEntity message = messageRepository.findByType(data.messageType())
                 .orElseThrow(() -> {
@@ -61,6 +61,7 @@ public class InvitationNotificationService implements NotificationService {
                 .notification(savedNotification)
                 .status(SendingStatus.PENDING)
                 .build();
-        sendingRepository.save(sending);
+        NotificationSendingEntity savedSending = sendingRepository.save(sending);
+        return savedSending.getId();
     }
 }

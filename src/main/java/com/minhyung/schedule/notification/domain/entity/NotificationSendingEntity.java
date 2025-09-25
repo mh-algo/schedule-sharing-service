@@ -38,4 +38,8 @@ public class NotificationSendingEntity extends CreatedAndUpdated {
         this.status = status;
         this.attempt = 0;
     }
+
+    public void updateStatus(SendingStatus updateStatus) {
+        this.status = updateStatus;
+    }
 }
