@@ -84,11 +84,15 @@ public class ScheduleGroupService {
 
         // 초대 받는 사람이 그룹 소속이 아닌지 검증
         groupMemberRepository.existsByUserId(invitee.getId())
-                .ifPresent(inviteeExists -> {
+                .ifPresent(exists -> {
                     throw new ApiException(GroupErrorCode.USER_ALREADY_EXISTS);
                 });
 
-        // TODO: invitee가 그룹 초대 상태인지 확인(초대가 만료되지 않았고, 응답하지 않은 경우 초대 x)
+        // 초대 받는 사람이 그룹 초대 상태인지 확인(초대가 만료되지 않았고, 응답하지 않은 경우 초대 x)
+        groupInviteRepository.existsValidGroupInvite(group.getId(), inviter.getId(), invitee.getId())
+                .ifPresent(exists -> {
+                    throw new ApiException(GroupErrorCode.USER_ALREADY_INVITED);
+                });
 
         // 그룹 초대 생성
         GroupInviteEntity entity = GroupInviteEntity.builder()
