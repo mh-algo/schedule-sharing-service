@@ -19,7 +19,9 @@ public class NotificationWorkerConfig {
         executor.setCorePoolSize(n);
         executor.setMaxPoolSize(n);
         executor.setQueueCapacity(0);       // 별도의 메시지 큐를 사용하기 때문에 0으로 설정
-        executor.setThreadNamePrefix("Notification-");
+        executor.setThreadNamePrefix("notify-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);     // 작업 대기 후 종료
+        executor.setAwaitTerminationSeconds(30);        // 대기 시간 30초
         executor.initialize();
         return executor;
     }
