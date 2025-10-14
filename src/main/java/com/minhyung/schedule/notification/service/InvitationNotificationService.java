@@ -6,6 +6,7 @@ import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.exception.ApiException;
 import com.minhyung.schedule.common.exception.ServerErrorCode;
 import com.minhyung.schedule.notification.domain.NotificationData;
+import com.minhyung.schedule.notification.domain.NotificationSendingInfo;
 import com.minhyung.schedule.notification.domain.SendingStatus;
 import com.minhyung.schedule.notification.domain.entity.NotificationEntity;
 import com.minhyung.schedule.notification.domain.entity.NotificationMessageEntity;
@@ -29,7 +30,7 @@ public class InvitationNotificationService implements NotificationService {
 
     @Transactional
     @Override
-    public Long createNotification(NotificationData data) {
+    public NotificationSendingInfo createNotification(NotificationData data) {
         // 메시지 조회
         NotificationMessageEntity message = messageRepository.findByType(data.messageType())
                 .orElseThrow(() -> {
@@ -62,6 +63,6 @@ public class InvitationNotificationService implements NotificationService {
                 .status(SendingStatus.PENDING)
                 .build();
         NotificationSendingEntity savedSending = sendingRepository.save(sending);
-        return savedSending.getId();
+        return new NotificationSendingInfo(savedSending.getId(), savedNotification.getReceiver().getId(), savedNotification.getPayload());
     }
 }

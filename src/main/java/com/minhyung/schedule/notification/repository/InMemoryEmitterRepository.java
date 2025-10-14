@@ -1,5 +1,6 @@
 package com.minhyung.schedule.notification.repository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -14,11 +15,19 @@ public class InMemoryEmitterRepository implements EmitterRepository {
     // 유저별 이벤트 캐시(정렬 보장)
     private static final ConcurrentHashMap<Long, ConcurrentSkipListMap<Long, Object>> eventCache = new ConcurrentHashMap<>();
 
+    @Value(value = "${sse.cache.max-entries}")
+    private int maxEntries;
+
     @Override
     public SseEmitter save(long userId, long emitterId, SseEmitter emitter) {
         emitters.computeIfAbsent(userId, k -> new ConcurrentHashMap<>())
                 .put(emitterId, emitter);
         return emitter;
+    }
+
+    @Override
+    public Map<Long, SseEmitter> findAllByUserId(long userId) {
+        return emitters.getOrDefault(userId, new ConcurrentHashMap<>());
     }
 
     @Override
@@ -29,6 +38,15 @@ public class InMemoryEmitterRepository implements EmitterRepository {
             if (map.isEmpty()) {
                 emitters.remove(userId);
             }
+        }
+    }
+
+    @Override
+    public void cacheEvent(long userId, long emitterId, Object data) {
+        ConcurrentSkipListMap<Long, Object> cache = eventCache.computeIfAbsent(userId, k -> new ConcurrentSkipListMap<>());
+        cache.put(emitterId, data);
+        if (cache.size() > maxEntries) {    // 최근 N개만 유지
+            cache.pollLastEntry();
         }
     }
 

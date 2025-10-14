@@ -1,6 +1,7 @@
 package com.minhyung.schedule.notification.handler;
 
 import com.minhyung.schedule.notification.domain.NotificationData;
+import com.minhyung.schedule.notification.domain.NotificationSendingInfo;
 import com.minhyung.schedule.notification.event.NotificationEvent;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
 import com.minhyung.schedule.notification.service.NotificationService;
@@ -27,9 +28,9 @@ public abstract class AbstractNotificationEventHandler<E extends NotificationEve
     public void onEvent(E event) {
         // 알림 및 알림 전송 정보 생성
         NotificationData data = toNotification(event);
-        Long sendingId = notificationService.createNotification(data);
+        NotificationSendingInfo sendingInfo = notificationService.createNotification(data);
 
         // 전송할 알림 publish
-        publisher.publishEvent(new NotificationPreparedEvent(sendingId));
+        publisher.publishEvent(new NotificationPreparedEvent(sendingInfo.sendingId(), sendingInfo.receiverId(), sendingInfo.payload()));
     }
 }

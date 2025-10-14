@@ -1,29 +1,39 @@
 package com.minhyung.schedule.notification.service;
 
-import com.minhyung.schedule.common.exception.ApiException;
-import com.minhyung.schedule.common.exception.ServerErrorCode;
-import com.minhyung.schedule.notification.domain.SendingStatus;
-import com.minhyung.schedule.notification.domain.entity.NotificationSendingEntity;
 import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 public class NotificationStatusService {
     private final NotificationSendingRepository sendingRepository;
 
+    @Value("${notify.lease.seconds}")
+    private int leaseSec;
+
     public NotificationStatusService(NotificationSendingRepository sendingRepository) {
         this.sendingRepository = sendingRepository;
     }
 
-    public void changeToReady(Long id) {
-        NotificationSendingEntity sending = sendingRepository.findById(id).orElseThrow(() -> {
-            log.warn("조회되는 NotificationSendingEntity가 없습니다.: {}", id);
-            return new ApiException(ServerErrorCode.SERVER_ERROR);
-        });
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean changeReady(Long id) {
+        int rows = sendingRepository.updateReadyById(id);
+        return rows == 1;
+    }
 
-        // sending 상태를 READY로 변경
-        sending.updateStatus(SendingStatus.READY);
+    @Transactional
+    public boolean changeProgressing(Long id) {
+        int rows = sendingRepository.updateProgressing(id, leaseSec);
+        return rows == 1;
+    }
+
+    @Transactional
+    public boolean changeSent(Long id) {
+        int rows = sendingRepository.updateSent(id);
+        return rows == 1;
     }
 }

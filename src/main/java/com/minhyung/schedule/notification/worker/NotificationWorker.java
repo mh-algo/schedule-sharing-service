@@ -1,6 +1,9 @@
 package com.minhyung.schedule.notification.worker;
 
 import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.SendResult;
+import com.minhyung.schedule.notification.service.NotificationStatusService;
+import com.minhyung.schedule.notification.service.SseService;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,11 +21,17 @@ public class NotificationWorker {
     private final BlockingQueue<QueueMessage> queue;
     private final ThreadPoolTaskExecutor executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private final SseService sseService;
+    private final NotificationStatusService notificationStatusService;
 
     protected NotificationWorker(BlockingQueue<QueueMessage> queue,
-                              @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor) {
+                                 @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
+                                 SseService sseService,
+                                 NotificationStatusService notificationStatusService) {
         this.queue = queue;
         this.executor = executor;
+        this.sseService = sseService;
+        this.notificationStatusService = notificationStatusService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -49,7 +58,7 @@ public class NotificationWorker {
                 QueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
                 if (!running.get()) break;  // 종료 신호 반영
                 if (message == null) continue;    // 메시지 없으면 다음 루프
-                // TODO: 알림 전송
+                sendNotification(message);
                 log.debug("{} - queue size: {}", currentThread.getName(), queue.size());
             } catch (InterruptedException e) {
                 currentThread.interrupt();
@@ -57,6 +66,28 @@ public class NotificationWorker {
             } catch (Exception e) {
                 // TODO: 재시도 로직
             }
+        }
+    }
+
+    private void sendNotification(QueueMessage message) {
+        long sendingId = message.sendingId();
+
+        // sending 상태 progressing으로 변경
+        boolean changed = notificationStatusService.changeProgressing(sendingId);
+        if (!changed) {
+            log.warn("skip sending: already claimed or not ready (sendingId={})", sendingId);
+            return;
+        }
+
+        // 알림 전송
+        SendResult sendResult = sseService.sendNotification(message.receiverId(), sendingId, message.payload());
+
+        // sending 상태 sent로 변경
+        if (sendResult.success()) {
+            notificationStatusService.changeSent(sendingId);
+        } else {
+            // TODO: changeRetryPending
+//            String lastErr = sendResult.lastErr();
         }
     }
 }
