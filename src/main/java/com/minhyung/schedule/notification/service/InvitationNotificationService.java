@@ -63,6 +63,7 @@ public class InvitationNotificationService implements NotificationService {
                 .status(SendingStatus.PENDING)
                 .build();
         NotificationSendingEntity savedSending = sendingRepository.save(sending);
-        return new NotificationSendingInfo(savedSending.getId(), savedNotification.getReceiver().getId(), savedNotification.getPayload());
+        return new NotificationSendingInfo(savedSending.getId(), savedNotification.getReceiver().getId(),
+                savedNotification.getPayload(), savedSending.getAttempt());
     }
 }

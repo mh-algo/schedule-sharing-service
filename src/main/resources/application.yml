@@ -56,3 +56,10 @@ sse:
 notify:
   lease:
     seconds: 10
+  retry:
+    enabled: true
+    delay-ms: 5000  # 5초(5 * 1000)
+    retry-delay-sec: 2
+    max-retry-delay-sec: 60
+    max-attempts: 5
+    batch-size: 200

@@ -4,6 +4,7 @@ import com.minhyung.schedule.notification.domain.QueueMessage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,5 +30,16 @@ public class NotificationWorkerConfig {
     @Bean
     BlockingQueue<QueueMessage> notificationQueue() {
         return new LinkedBlockingQueue<>(50000);
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler retryScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1);
+        scheduler.setThreadNamePrefix("retry-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(30);
+        scheduler.initialize();
+        return scheduler;
     }
 }

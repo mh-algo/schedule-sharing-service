@@ -2,6 +2,7 @@ package com.minhyung.schedule.notification.worker;
 
 import com.minhyung.schedule.notification.domain.QueueMessage;
 import com.minhyung.schedule.notification.domain.SendResult;
+import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.service.NotificationStatusService;
 import com.minhyung.schedule.notification.service.SseService;
 import jakarta.annotation.PreDestroy;
@@ -23,15 +24,17 @@ public class NotificationWorker {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final SseService sseService;
     private final NotificationStatusService notificationStatusService;
+    private final BackoffCalculator backoffCalculator;
 
     protected NotificationWorker(BlockingQueue<QueueMessage> queue,
                                  @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
                                  SseService sseService,
-                                 NotificationStatusService notificationStatusService) {
+                                 NotificationStatusService notificationStatusService, BackoffCalculator backoffCalculator) {
         this.queue = queue;
         this.executor = executor;
         this.sseService = sseService;
         this.notificationStatusService = notificationStatusService;
+        this.backoffCalculator = backoffCalculator;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -63,17 +66,16 @@ public class NotificationWorker {
             } catch (InterruptedException e) {
                 currentThread.interrupt();
                 break;
-            } catch (Exception e) {
-                // TODO: 재시도 로직
             }
         }
     }
 
     private void sendNotification(QueueMessage message) {
         long sendingId = message.sendingId();
+        int attempt = message.attempt();
 
         // sending 상태 progressing으로 변경
-        boolean changed = notificationStatusService.changeProgressing(sendingId);
+        boolean changed = notificationStatusService.changeProgressing(sendingId, attempt);
         if (!changed) {
             log.warn("skip sending: already claimed or not ready (sendingId={})", sendingId);
             return;
@@ -82,12 +84,19 @@ public class NotificationWorker {
         // 알림 전송
         SendResult sendResult = sseService.sendNotification(message.receiverId(), sendingId, message.payload());
 
-        // sending 상태 sent로 변경
+        // sending 상태 SENT로 변경
         if (sendResult.success()) {
             notificationStatusService.changeSent(sendingId);
         } else {
-            // TODO: changeRetryPending
-//            String lastErr = sendResult.lastErr();
+            String lastErr = sendResult.lastErr();
+            if (lastErr != null) {  // sse 전송 도중 에러가 발생한 경우
+                // 전송 상태를 RETRY_PENDING로 변경
+                long backoff = backoffCalculator.calculate(attempt);
+                notificationStatusService.changeRetryPending(sendingId, lastErr, backoff);
+            } else {    // SseEmitter가 존재하지 않아서 전송 실패한 경우
+                // 전송 상태를 FAILED로 변경
+                notificationStatusService.changeFailed(sendingId);
+            }
         }
     }
 }

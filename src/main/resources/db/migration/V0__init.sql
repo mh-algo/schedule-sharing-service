@@ -106,6 +106,7 @@ CREATE TABLE `notification_sending` (
     `attempt`	INT	NOT NULL    DEFAULT 0,
     `last_attempt_at`   TIMESTAMP	NULL,
     `lease_until`   TIMESTAMP	NULL,
+    `last_error`    TEXT    NULL,
     `next_push_at`	TIMESTAMP	NULL,
     `sent_at`   TIMESTAMP	NULL,
     `created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,

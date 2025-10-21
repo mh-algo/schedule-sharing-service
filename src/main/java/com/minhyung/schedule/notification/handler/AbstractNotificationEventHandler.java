@@ -31,6 +31,7 @@ public abstract class AbstractNotificationEventHandler<E extends NotificationEve
         NotificationSendingInfo sendingInfo = notificationService.createNotification(data);
 
         // 전송할 알림 publish
-        publisher.publishEvent(new NotificationPreparedEvent(sendingInfo.sendingId(), sendingInfo.receiverId(), sendingInfo.payload()));
+        publisher.publishEvent(new NotificationPreparedEvent(sendingInfo.sendingId(), sendingInfo.receiverId(),
+                sendingInfo.payload(), sendingInfo.attempt()));
     }
 }

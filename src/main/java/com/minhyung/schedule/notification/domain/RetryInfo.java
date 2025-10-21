@@ -1,9 +1,8 @@
 package com.minhyung.schedule.notification.domain;
 
-public record NotificationSendingInfo(
+public record RetryInfo(
         Long sendingId,
-        Long receiverId,
-        String payload,
+        Long notificationId,
         Integer attempt
 ) {
 }
