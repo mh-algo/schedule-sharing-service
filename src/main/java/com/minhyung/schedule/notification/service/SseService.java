@@ -88,6 +88,7 @@ public class SseService {
 
         int success = 0;
         String lastErr = null;
+        // receiverId에 해당하는 모든 SseEmitter를 사용하여 알림 전송
         for (Map.Entry<Long, SseEmitter> entry : new ArrayList<>(emitters.entrySet())) {
             Long emitterId = entry.getKey();
             SseEmitter emitter = entry.getValue();

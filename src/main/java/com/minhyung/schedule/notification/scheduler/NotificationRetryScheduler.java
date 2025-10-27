@@ -75,7 +75,7 @@ public class NotificationRetryScheduler {
                 // 최대 시도 횟수보다 작은 경우 READY, 클 경우 FAILED로 변경 후 재시도할 리스트 반환
                 List<RetryInfo> sendingRetryInfoList = notificationStatusService.changeRetryPendingToReadyOrFailed(batchSize, props.maxAttempts());
 
-                // 재시도할 메시지가 존재하는 경우
+                // 재시도할 알림이 존재하는 경우
                 if (!sendingRetryInfoList.isEmpty()) {
                     Map<Long, RetryInfo> retryInfoMap = sendingRetryInfoList.stream()
                             .collect(Collectors.toMap(RetryInfo::notificationId, Function.identity()));
@@ -114,8 +114,7 @@ public class NotificationRetryScheduler {
                         }
                     }
                 } else {    // 재시도할 메시지가 존재하지 않는 경우
-//                log.debug("Empty RetryInfoList");
-                    log.info("Empty RetryInfoList");
+                    log.debug("Empty RetryInfoList");
                     Thread.sleep(props.delayMs());
                 }
             } catch (InterruptedException e) {

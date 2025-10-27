@@ -10,18 +10,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface NotificationSendingRepository extends JpaRepository<NotificationSendingEntity, Long> {
-    // status = 1: READY, 5: RETRY_PENDING
-//    @Query(value = """
-//        select id
-//        from notification_sending
-//        where (status = 1 or status = 5)
-//            and (next_push_at is null or next_push_at < now())
-//        limit 1
-//        for update skip locked
-//    """, nativeQuery = true)
-//    Optional<Long> findIdForUpdateSkipLocked();
+    /*
+        status = 0: PENDING, 1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED, 5: RETRY_PENDING
+    */
 
-    // status = 1: READY
     @Modifying
     @Query(value = """
         update notification_sending
@@ -31,7 +23,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateReadyById(@Param(("id")) Long id);
 
-    // status = 1: READY, 2: PROGRESSING, 5: RETRY_PENDING
     @Modifying
     @Query(value = """
         update notification_sending
@@ -46,21 +37,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateProgressing(@Param("id") Long id, @Param("leaseSec") int leaseSec, @Param("attempt") int attempt);
 
-    // status = 1: READY, 2: PROGRESSING, 5: RETRY_PENDING
-//    @Modifying
-//    @Query(value = """
-//        update notification_sending
-//        set status = 2,
-//            lease_until = date_add(now(), interval :leaseSec second),
-//            last_attempt_at = now(),
-//            updated_at = now()
-//        where id = :id
-//            and (status = 1 or status = 5)
-//            and lease_until is null
-//    """, nativeQuery = true)
-//    int updateProgressing(@Param("id") Long id, @Param("leaseSec") int leaseSec);
-
-    // status = 2: PROGRESSING, 3: SENT
     @Modifying
     @Query(value = """
         update notification_sending
@@ -86,7 +62,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateFailed(@Param("id") Long id);
 
-    // status = 5: RETRY_PENDING
     @Modifying
     @Query(value = """
         update notification_sending
@@ -100,7 +75,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateRetryPending(@Param(("id")) Long id, @Param("error") String error, @Param("backoffSec") long backoffSec);
 
-    // status = 5: RETRY_PENDING
     @Modifying
     @Query(value = """
         update notification_sending
@@ -115,7 +89,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateRetryPending(@Param(("id")) Long id, @Param("error") String error, @Param("backoffSec") long backoffSec, @Param("attempt") int attempt);
 
-    // status = 2: PROGRESSING, status = 5: RETRY_PENDING
     @Modifying
     @Query(value = """
         update notification_sending
@@ -128,7 +101,6 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
     """, nativeQuery = true)
     int updateProgressingExpiredToRetryPending(@Param("batchSize") int batchSize);
 
-    // status = 5: RETRY_PENDING
     // NULL 정렬 기준은 mysql 기준
     @Query(value = """
         select id as sendingId, notification_id, attempt
@@ -165,5 +137,4 @@ public interface NotificationSendingRepository extends JpaRepository<Notificatio
           and id in (:failIds)
     """, nativeQuery = true)
     int updateFailedByIds(@Param("failIds") List<Long> failIds);
-
 }

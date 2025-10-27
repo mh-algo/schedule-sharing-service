@@ -10,12 +10,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
-public class InviteEventHandler extends AbstractNotificationEventHandler<InvitationCreatedEvent> {
+public class InviteNotificationOutBoxEventHandler extends AbstractNotificationOutBoxEventHandler<InvitationCreatedEvent> {
     private final PayloadEncoderRegistry payloadEncoderRegistry;
 
-    public InviteEventHandler(@Qualifier("invitationNotificationService") NotificationService notificationService,
-                              ApplicationEventPublisher publisher,
-                              PayloadEncoderRegistry payloadEncoderRegistry) {
+    public InviteNotificationOutBoxEventHandler(@Qualifier("invitationNotificationService") NotificationService notificationService,
+                                                ApplicationEventPublisher publisher,
+                                                PayloadEncoderRegistry payloadEncoderRegistry) {
         super(notificationService, publisher);
         this.payloadEncoderRegistry = payloadEncoderRegistry;
     }

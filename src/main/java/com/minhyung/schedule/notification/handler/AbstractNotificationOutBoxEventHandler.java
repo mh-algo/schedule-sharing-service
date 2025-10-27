@@ -8,22 +8,20 @@ import com.minhyung.schedule.notification.service.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
-public abstract class AbstractNotificationEventHandler<E extends NotificationEvent> {
+public abstract class AbstractNotificationOutBoxEventHandler<E extends NotificationEvent> {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher publisher;
 
-    protected AbstractNotificationEventHandler(NotificationService notificationService,
-                                               ApplicationEventPublisher publisher) {
+    protected AbstractNotificationOutBoxEventHandler(NotificationService notificationService,
+                                                     ApplicationEventPublisher publisher) {
         this.notificationService = notificationService;
         this.publisher = publisher;
     }
 
     protected abstract NotificationData toNotification(E event);
 
-    @Transactional
     @EventListener
     public void onEvent(E event) {
         // 알림 및 알림 전송 정보 생성
