@@ -1,6 +1,7 @@
 package com.minhyung.schedule.notification.controller;
 
 import com.minhyung.schedule.common.ApiPaths;
+import com.minhyung.schedule.notification.controller.docs.SseApiDocs;
 import com.minhyung.schedule.notification.service.SseService;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping(ApiPaths.SSE)
 @RequiredArgsConstructor
-public class SseController {
+public class SseController implements SseApiDocs {
     private final SseService sseService;
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> connect(@AuthenticationPrincipal UserPrincipal principal,
-                                             @RequestHeader(value="Last-Event-ID", required=false) Long lastEventId) {
+                                              @RequestHeader(value="Last-Event-ID", required=false) Long lastEventId) {
         return ResponseEntity.ok(sseService.connect(principal.id(), lastEventId));
     }
 }
