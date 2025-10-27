@@ -37,6 +37,6 @@ public class ScheduleGroupController implements ScheduleGroupApiDocs {
     public ResponseEntity<ApiResult<Void>> invite(@AuthenticationPrincipal UserPrincipal principal,
                                                   @PathVariable Long groupId, @RequestBody @Valid InviteUserRequest request) {
         scheduleGroupService.invite(principal.id(), groupId, request);
-        return ResponseEntity.ok().body(ApiResult.success());
+        return ResponseEntity.ok().body(ApiResult.success("그룹 초대가 완료되었습니다."));
     }
 }
