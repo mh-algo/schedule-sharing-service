@@ -3,6 +3,7 @@ package com.minhyung.schedule.group.controller.docs;
 import com.minhyung.schedule.common.ApiResult;
 import com.minhyung.schedule.group.dto.CreateGroupRequest;
 import com.minhyung.schedule.group.dto.CreateGroupResponse;
+import com.minhyung.schedule.group.dto.InviteUserRequest;
 import com.minhyung.schedule.security.principal.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -43,4 +44,21 @@ public interface ScheduleGroupApiDocs {
             @ApiResponse(responseCode = "500", description = "SERVER_001", content = @Content)
     })
     ResponseEntity<ApiResult<CreateGroupResponse>> create(UserPrincipal principal, CreateGroupRequest request);
+
+    @Operation(summary = "그룹 초대", description = "그룹에 소속된 사용자가 다른 이용자를 그룹에 초대합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "그룹 초대 완료",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schemaProperties = {
+                                    @SchemaProperty(name= "status", schema = @Schema(type = "integer", example = "200")),
+                                    @SchemaProperty(name= "message", schema = @Schema(type = "string", example = "그룹 생성이 완료되었습니다."))
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_001", content = @Content),
+            @ApiResponse(responseCode = "401", description = "AUTH_006", content = @Content),
+            @ApiResponse(responseCode = "500", description = "SERVER_001", content = @Content)
+    })
+    ResponseEntity<ApiResult<Void>> invite(UserPrincipal principal, Long groupId, InviteUserRequest request);
 }

@@ -1,7 +1,7 @@
 package com.minhyung.schedule.auth.repository;
 
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
-import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserLoginDto;
 import com.minhyung.schedule.auth.dto.UserStatusDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,16 +14,18 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<Integer> existsByUsername(@Param("username") String username);
 
     @Query("""
-        select new com.minhyung.schedule.auth.dto.UserInfoDto(u.id, u.username, u.password, u.status)
+        select new com.minhyung.schedule.auth.dto.UserLoginDto(u.id, u.username, u.password, u.status)
         from UserEntity u
         where u.username = :username and u.deletedAt is null
     """)
-    Optional<UserInfoDto> findByUsername(@Param("username") String username);
+    Optional<UserLoginDto> findUserLoginByUsername(@Param("username") String username);
 
     @Query("""
         select new com.minhyung.schedule.auth.dto.UserStatusDto(u.id, u.status)
         from UserEntity u
         where u.id = :id and u.deletedAt is null
     """)
-    Optional<UserStatusDto> findByUserId(@Param("id") Long id);
+    Optional<UserStatusDto> findUserStatusById(@Param("id") Long id);
+
+    Optional<UserEntity> findByUsername(String username);
 }

@@ -1,9 +1,9 @@
 package com.minhyung.schedule.auth.service;
 
-import com.minhyung.schedule.auth.dto.UserInfoDto;
+import com.minhyung.schedule.auth.dto.UserLoginDto;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.repository.UserRepository;
-import com.minhyung.schedule.security.testsupport.TestUserInfoDtoBuilder;
+import com.minhyung.schedule.security.testsupport.TestUserLoginDtoBuilder;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,15 +29,15 @@ class UserServiceTest {
     void 사용자_정보_조회() {
         // given
         String username = "username";
-        UserInfoDto userInfoDto = TestUserInfoDtoBuilder.user().build();
+        UserLoginDto userLoginDto = TestUserLoginDtoBuilder.user().build();
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(userInfoDto));
+        when(userRepository.findUserLoginByUsername(username)).thenReturn(Optional.of(userLoginDto));
 
         // when
-        UserInfoDto result = userService.getUserInfo(username);
+        UserLoginDto result = userService.getUserLogin(username);
 
         // then
-        assertThat(result).isEqualTo(userInfoDto);
+        assertThat(result).isEqualTo(userLoginDto);
     }
 
     @Test
@@ -45,10 +45,10 @@ class UserServiceTest {
         // given
         String username = "username";
         
-        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        when(userRepository.findUserLoginByUsername(username)).thenReturn(Optional.empty());
 
         // when
-        ThrowingCallable action = () -> userService.getUserInfo(username);
+        ThrowingCallable action = () -> userService.getUserLogin(username);
 
         // then
         assertThatExceptionOfType(UserNotFoundException.class)

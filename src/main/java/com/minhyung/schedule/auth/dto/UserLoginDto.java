@@ -2,7 +2,7 @@ package com.minhyung.schedule.auth.dto;
 
 import com.minhyung.schedule.auth.domain.UserStatus;
 
-public record UserInfoDto(
+public record UserLoginDto(
         Long id,
         String username,
         String password,

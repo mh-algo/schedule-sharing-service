@@ -3,7 +3,7 @@ package com.minhyung.schedule.auth.service;
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.dto.SignupRequest;
 import com.minhyung.schedule.auth.dto.SignupResponse;
-import com.minhyung.schedule.auth.exception.SignupErrorCode;
+import com.minhyung.schedule.auth.exception.UserServiceErrorCode;
 import com.minhyung.schedule.auth.repository.UserRepository;
 import com.minhyung.schedule.common.exception.ApiException;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -66,7 +66,7 @@ class SignupServiceTest {
         ThrowingCallable action = () -> signupService.signup(request);
 
         // then
-        SignupErrorCode errorCode = SignupErrorCode.DUPLICATED_USERNAME;
+        UserServiceErrorCode errorCode = UserServiceErrorCode.DUPLICATED_USERNAME;
 
         assertThatExceptionOfType(ApiException.class)
                 .isThrownBy(action)

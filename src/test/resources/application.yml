@@ -36,3 +36,20 @@ jwt:
     enabled: true
     delay-ms: 3600000    # 1시간(60 * 60 * 1000)
     initial-ms: 3600000    # 1시간(60 * 60 * 1000)
+
+sse:
+  cache:
+    max-entries: 500       # 최근 N개 유지
+  emitters:
+    ttl-ms: 3600000    # 1시간(60 * 60 * 1000)
+
+notify:
+  lease:
+    seconds: 10
+  retry:
+    enabled: true
+    delay-ms: 5000  # 5초(5 * 1000)
+    retry-delay-sec: 2
+    max-retry-delay-sec: 60
+    max-attempts: 5
+    batch-size: 200
