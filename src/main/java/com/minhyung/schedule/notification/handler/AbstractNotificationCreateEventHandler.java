@@ -7,16 +7,14 @@ import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
 import com.minhyung.schedule.notification.service.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-@Component
-public abstract class AbstractNotificationOutBoxEventHandler<E extends NotificationEvent> {
+public abstract class AbstractNotificationCreateEventHandler<E extends NotificationEvent> {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher publisher;
 
-    protected AbstractNotificationOutBoxEventHandler(NotificationService notificationService,
+    protected AbstractNotificationCreateEventHandler(NotificationService notificationService,
                                                      ApplicationEventPublisher publisher) {
         this.notificationService = notificationService;
         this.publisher = publisher;
