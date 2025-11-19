@@ -43,4 +43,19 @@ public class NotificationWorkerConfig {
         scheduler.initialize();
         return scheduler;
     }
+
+    @Bean(name = "defaultAsyncExecutor")
+    public ThreadPoolTaskExecutor defaultAsyncExecutor() {
+//        int cores = Runtime.getRuntime().availableProcessors();     // I/O 바운드 작업 기준 스레드 개수 = CPU 코어수 * 2
+//        int n = Math.max(8, Math.min(cores*2, 16));                // 최소 8, 최대 16
+        int n = 8;
+
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(n);
+        executor.setMaxPoolSize(n);
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("async-");
+        executor.initialize();
+        return executor;
+    }
 }

@@ -6,8 +6,10 @@ import com.minhyung.schedule.notification.event.NotificationEvent;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
 import com.minhyung.schedule.notification.service.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public abstract class AbstractNotificationOutBoxEventHandler<E extends NotificationEvent> {
@@ -22,7 +24,8 @@ public abstract class AbstractNotificationOutBoxEventHandler<E extends Notificat
 
     protected abstract NotificationData toNotification(E event);
 
-    @EventListener
+    @Async("defaultAsyncExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onEvent(E event) {
         // 알림 및 알림 전송 정보 생성
         NotificationData data = toNotification(event);

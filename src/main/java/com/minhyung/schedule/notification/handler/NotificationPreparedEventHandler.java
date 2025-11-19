@@ -7,9 +7,8 @@ import com.minhyung.schedule.notification.service.NotificationStatusService;
 import com.minhyung.schedule.notification.service.QueuePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -19,24 +18,16 @@ public class NotificationPreparedEventHandler {
     private final NotificationStatusService notificationStatusService;
     private final BackoffCalculator backoffCalculator;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void onEvent(NotificationPreparedEvent event) {
         Long sendingId = event.sendingId();
 
-        // sending 상태 READY로 변경
-        boolean changed = notificationStatusService.changeReady(sendingId);
-        boolean published = false;
         Integer attempt = event.attempt();
-
-        if (changed) {
-            // 전송할 알림 큐에 삽입
-            published = queuePublisher.publish(
-                    QueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
-        }
+        boolean published = queuePublisher.publish(QueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
 
         // sending 상태 변경 또는 큐 삽입 실패
-        if (!changed || !published) {
-            String errorMessage = String.format("Sending status to READY: %s, Queue published: %s", changed, published);
+        if (!published) {
+            String errorMessage = String.format("Queue published: %s", published);
 
             // 지수백오프 계산
             long backoff = backoffCalculator.calculate(attempt);

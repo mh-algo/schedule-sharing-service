@@ -51,13 +51,13 @@ public class NotificationStatusService {
         return rows == 1;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public boolean changeRetryPending(Long id, String error, long backoffSec) {
         int rows = sendingRepository.updateRetryPending(id, error, backoffSec);
         return rows == 1;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public boolean changeRetryPending(Long id, String error, long backoffSec, int attempt) {
         int rows = sendingRepository.updateRetryPending(id, error, backoffSec, attempt);
         return rows == 1;

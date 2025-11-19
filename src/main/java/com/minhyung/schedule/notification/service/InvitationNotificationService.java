@@ -60,7 +60,7 @@ public class InvitationNotificationService implements NotificationService {
         // 알림 전송 생성
         NotificationSendingEntity sending = NotificationSendingEntity.builder()
                 .notification(savedNotification)
-                .status(SendingStatus.PENDING)
+                .status(SendingStatus.READY)
                 .build();
         NotificationSendingEntity savedSending = sendingRepository.save(sending);
         return new NotificationSendingInfo(savedSending.getId(), savedNotification.getReceiver().getId(),
