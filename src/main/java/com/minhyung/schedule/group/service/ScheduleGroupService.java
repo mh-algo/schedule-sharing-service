@@ -3,6 +3,7 @@ package com.minhyung.schedule.group.service;
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
 import com.minhyung.schedule.auth.exception.UserServiceErrorCode;
+import com.minhyung.schedule.auth.repository.UserRepository;
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.common.exception.ApiException;
 import com.minhyung.schedule.group.domain.GroupInviteStatus;
@@ -21,11 +22,13 @@ import com.minhyung.schedule.group.repository.GroupInviteRepository;
 import com.minhyung.schedule.group.repository.GroupMemberRepository;
 import com.minhyung.schedule.group.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScheduleGroupService {
@@ -33,6 +36,7 @@ public class ScheduleGroupService {
     private final GroupInviteRepository groupInviteRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final UserService userService;
+    private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -61,38 +65,21 @@ public class ScheduleGroupService {
     }
 
     @Transactional
-    @PreAuthorize("isAuthenticated() and authentication.principal.id == #id")
-    public void invite(Long id, Long groupId, InviteUserRequest request) {
+    @PreAuthorize("isAuthenticated() and authentication.principal.id == #userId")
+    public void invite(Long userId, Long groupId, InviteUserRequest request) {
+        long start = System.currentTimeMillis();
+
         // 초대 그룹
         GroupEntity group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
 
-        // 초대한 사람
-        UserEntity inviter = userService.getUserEntity(id);
-
-        // 초대한 사람이 그룹 소속인지 검증
-        groupMemberRepository.existsByUserId(inviter.getId())
+        // 초대한 사람 (초대한 사람이 그룹 소속인지 검증)
+        UserEntity inviter = groupMemberRepository.findInviterCandidate(userId, groupId)
                 .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
 
         // 초대 받는 사람
-        UserEntity invitee;
-        try {
-            invitee = userService.getUserEntity(request.username());
-        } catch (UserNotFoundException e) {
-            throw new ApiException(UserServiceErrorCode.USER_NOT_FOUND);
-        }
-
-        // 초대 받는 사람이 그룹 소속이 아닌지 검증
-        groupMemberRepository.existsByUserId(invitee.getId())
-                .ifPresent(exists -> {
-                    throw new ApiException(GroupErrorCode.USER_ALREADY_EXISTS);
-                });
-
-        // 초대 받는 사람이 그룹 초대 상태인지 확인(초대가 만료되지 않았고, 응답하지 않은 경우 초대 x)
-        groupInviteRepository.existsValidGroupInvite(group.getId(), inviter.getId(), invitee.getId())
-                .ifPresent(exists -> {
-                    throw new ApiException(GroupErrorCode.USER_ALREADY_INVITED);
-                });
+        UserEntity invitee = userRepository.findInvitableUser(request.username(), groupId)
+                .orElseThrow(() -> new ApiException(GroupErrorCode.USER_ALREADY_EXISTS_OR_INVITED));
 
         // 그룹 초대 생성
         GroupInviteEntity entity = GroupInviteEntity.builder()
@@ -117,5 +104,6 @@ public class ScheduleGroupService {
                 .build();
 
         eventPublisher.publishEvent(event);
+        log.debug("[INVITE] total service time = {} ms", (System.currentTimeMillis() - start));
     }
 }

@@ -9,8 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum GroupErrorCode implements ErrorCode {
     INVALID_ACCESS(HttpStatus.FORBIDDEN, "GROUP_001", "접근 권한이 없습니다."),
-    USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "GROUP_002", "이미 그룹에 속한 사용자입니다."),
-    USER_ALREADY_INVITED(HttpStatus.CONFLICT, "GROUP_003", "이미 그룹에 초대된 사용자입니다.");
+    USER_ALREADY_EXISTS_OR_INVITED(HttpStatus.CONFLICT, "GROUP_002", "이미 그룹에 속한 사용자이거나, 이미 그룹에 초대된 사용자입니다.");
 
     private final HttpStatus status;
     private final String code;
