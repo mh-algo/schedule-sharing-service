@@ -13,8 +13,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class NotificationWorkerConfig {
     @Bean
     public ThreadPoolTaskExecutor notificationExecutor() {
-        int cores = Runtime.getRuntime().availableProcessors();     // I/O 바운드 작업 기준 스레드 개수 = CPU 코어수 * 2
-        int n = Math.max(8, Math.min(cores*2, 128));                // 최소 8, 최대 128
+//        int cores = Runtime.getRuntime().availableProcessors();     // I/O 바운드 작업 기준 스레드 개수 = CPU 코어수 * 2
+//        int n = Math.max(8, Math.min(cores*2, 16));                // 최소 8, 최대 16
+        int n = 8;
 
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(n);

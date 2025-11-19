@@ -1,3 +1,8 @@
+server:
+  tomcat:
+    threads:
+      max: 64
+
 spring:
   application:
     name: schedule-sharing-service
@@ -10,6 +15,9 @@ spring:
     url: jdbc:mysql://${DB_URL:localhost}:${DB_PORT:3306}/${DB_NAME:schedule_sharing_service}?serverTimezone=Asia/Seoul
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 60
+      minimum-idle: 60
 
   jpa:
     properties:
@@ -28,10 +36,12 @@ spring:
 
 logging:
   level:
-    org.springframework: info
+    org.springframework: debug
     org.hibernate:
         SQL: debug
         orm.jdbc.bind: trace
+    com.zaxxer.hikari.HikariConfig: DEBUG
+    com.zaxxer.hikari: TRACE
 #    org.springframework.security: DEBUG
 #    org.springframework.security.web.access.ExceptionTranslationFilter: DEBUG
 #    org.springframework.security.web.authentication: DEBUG
@@ -58,7 +68,7 @@ notify:
     seconds: 10
   retry:
     enabled: true
-    delay-ms: 5000  # 5초(5 * 1000)
+    delay-ms: 30000  # 30초(30 * 1000)
     retry-delay-sec: 2
     max-retry-delay-sec: 60
     max-attempts: 5
