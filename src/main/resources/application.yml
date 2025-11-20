@@ -36,7 +36,7 @@ spring:
 
 logging:
   level:
-    org.springframework: debug
+    org.springframework: info
     org.hibernate:
         SQL: debug
         orm.jdbc.bind: trace
@@ -64,7 +64,7 @@ sse:
     ttl-ms: 3600000    # 1시간(60 * 60 * 1000)
 
 notify:
-  mode: legacy      # legacy / outbox
+  mode: outbox      # legacy / outbox
   lease:
     seconds: 10
   retry:

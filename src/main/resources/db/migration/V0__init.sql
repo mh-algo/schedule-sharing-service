@@ -102,7 +102,7 @@ CREATE TABLE `notifications` (
 CREATE TABLE `notification_sending` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
     `notification_id`	BIGINT	NOT NULL,
-    `status`	TINYINT	NOT NULL    DEFAULT 0	COMMENT '0: PENDING, 1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED, 5: RETRY_PENDING',
+    `status`	TINYINT	NOT NULL    DEFAULT 0	COMMENT '1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED, 5: RETRY_PENDING',
     `attempt`	INT	NOT NULL    DEFAULT 0,
     `last_attempt_at`   TIMESTAMP	NULL,
     `lease_until`   TIMESTAMP	NULL,
@@ -114,6 +114,21 @@ CREATE TABLE `notification_sending` (
     PRIMARY KEY (`id`),
     CONSTRAINT fk_notification_sending_notification_id FOREIGN KEY (`notification_id`) REFERENCES `notifications`(`id`),
     UNIQUE KEY uk_notification_id (`notification_id`)
+);
+
+CREATE TABLE `notification_outbox` (
+	`id`	BIGINT	NOT NULL AUTO_INCREMENT,
+	`receiver_id`	BIGINT	NOT NULL,
+    `payload`	TEXT	NULL,
+	`status`	TINYINT	NOT NULL	DEFAULT 0	COMMENT '1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED, 5: RETRY_PENDING',
+	`attempt`	INT	NOT NULL	DEFAULT 0,
+	`last_attempt_at`	TIMESTAMP	NULL,
+	`lease_until`	TIMESTAMP	NULL,
+	`last_error`	TEXT	NULL,
+	`next_push_at`	TIMESTAMP	NULL,
+	`created_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP,
+	`updated_at`	TIMESTAMP	NOT NULL	DEFAULT CURRENT_TIMESTAMP   ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `group_activity_logs` (

@@ -25,7 +25,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @Configuration
-@ConditionalOnProperty(name = "notify.mode", havingValue="legacy", matchIfMissing=true)
+@ConditionalOnProperty(name = "notify.mode", havingValue="legacy")
 public class LegacyNotificationConfig {
     @Bean
     public NotificationCreateEventHandler notificationCreateEventHandler(@Qualifier("invitationNotificationService") NotificationService notificationService,
