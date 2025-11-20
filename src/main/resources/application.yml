@@ -64,6 +64,7 @@ sse:
     ttl-ms: 3600000    # 1시간(60 * 60 * 1000)
 
 notify:
+  mode: legacy      # legacy / outbox
   lease:
     seconds: 10
   retry:

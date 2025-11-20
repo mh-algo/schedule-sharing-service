@@ -10,12 +10,9 @@ import com.minhyung.schedule.notification.service.NotificationStatusService;
 import com.minhyung.schedule.notification.service.QueuePublisher;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Component
-@ConditionalOnProperty(value="notify.retry.enable", havingValue="true", matchIfMissing=true)
 public class NotificationRetryScheduler {
     private final ThreadPoolTaskScheduler scheduler;
     private final NotificationStatusService notificationStatusService;
@@ -35,7 +30,7 @@ public class NotificationRetryScheduler {
     private final QueuePublisher publisher;
     private final BackoffCalculator backoffCalculator;
 
-    protected NotificationRetryScheduler(@Qualifier("retryScheduler") ThreadPoolTaskScheduler scheduler,
+    public NotificationRetryScheduler(ThreadPoolTaskScheduler scheduler,
                                          NotificationStatusService notificationStatusService,
                                          NotifyRetryProps props, QueuePublisher publisher,
                                          BackoffCalculator backoffCalculator) {

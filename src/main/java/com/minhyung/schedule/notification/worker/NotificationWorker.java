@@ -11,13 +11,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-@Component
 public class NotificationWorker {
     private final BlockingQueue<QueueMessage> queue;
     private final ThreadPoolTaskExecutor executor;
@@ -26,7 +24,7 @@ public class NotificationWorker {
     private final NotificationStatusService notificationStatusService;
     private final BackoffCalculator backoffCalculator;
 
-    protected NotificationWorker(BlockingQueue<QueueMessage> queue,
+    public NotificationWorker(BlockingQueue<QueueMessage> queue,
                                  @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
                                  SseService sseService,
                                  NotificationStatusService notificationStatusService, BackoffCalculator backoffCalculator) {
@@ -58,11 +56,13 @@ public class NotificationWorker {
         Thread currentThread = Thread.currentThread();
         while (running.get()) {
             try {
+                long startTime = System.currentTimeMillis();
                 QueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
                 if (!running.get()) break;  // 종료 신호 반영
                 if (message == null) continue;    // 메시지 없으면 다음 루프
                 sendNotification(message);
                 log.debug("{} - queue size: {}", currentThread.getName(), queue.size());
+                log.debug("send time: {}", System.currentTimeMillis() - startTime);
             } catch (InterruptedException e) {
                 currentThread.interrupt();
                 break;
