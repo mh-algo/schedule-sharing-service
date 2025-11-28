@@ -7,7 +7,6 @@ import com.minhyung.schedule.notification.service.NotificationStatusService;
 import com.minhyung.schedule.notification.service.SseService;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -25,9 +24,10 @@ public class NotificationWorker {
     private final BackoffCalculator backoffCalculator;
 
     public NotificationWorker(BlockingQueue<QueueMessage> queue,
-                                 @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
-                                 SseService sseService,
-                                 NotificationStatusService notificationStatusService, BackoffCalculator backoffCalculator) {
+                              ThreadPoolTaskExecutor executor,
+                              SseService sseService,
+                              NotificationStatusService notificationStatusService,
+                              BackoffCalculator backoffCalculator) {
         this.queue = queue;
         this.executor = executor;
         this.sseService = sseService;
@@ -71,13 +71,13 @@ public class NotificationWorker {
     }
 
     private void sendNotification(QueueMessage message) {
-        long sendingId = message.sendingId();
+        long sendingId = message.id();
         int attempt = message.attempt();
 
         // sending 상태 progressing으로 변경
         boolean changed = notificationStatusService.changeProgressing(sendingId, attempt);
         if (!changed) {
-            log.warn("skip sending: already claimed or not ready (sendingId={})", sendingId);
+            log.warn("skip sending: already claimed or not ready (id={})", sendingId);
             return;
         }
 

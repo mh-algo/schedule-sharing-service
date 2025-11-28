@@ -93,11 +93,11 @@ public class SseService {
             Long emitterId = entry.getKey();
             SseEmitter emitter = entry.getValue();
             try {
-                log.info("Send Notification (receiverId: {}, sendingId: {})", receiverId, emitterId);
+                log.info("Send Notification (receiverId: {}, id: {})", receiverId, emitterId);
                 send(emitter, sendingId, data, getCleanup(receiverId, emitterId));
                 success++;
             } catch (IOException e) {
-                log.warn("Failed to send event (receiverId={}, emitterId={}, sendingId={}): {}",
+                log.warn("Failed to send event (receiverId={}, emitterId={}, id={}): {}",
                         receiverId, emitterId, sendingId, e.toString());
                 lastErr = e.toString();
             }

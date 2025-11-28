@@ -31,9 +31,10 @@ public class NotificationRetryScheduler {
     private final BackoffCalculator backoffCalculator;
 
     public NotificationRetryScheduler(ThreadPoolTaskScheduler scheduler,
-                                         NotificationStatusService notificationStatusService,
-                                         NotifyRetryProps props, QueuePublisher publisher,
-                                         BackoffCalculator backoffCalculator) {
+                                      NotificationStatusService notificationStatusService,
+                                      NotifyRetryProps props,
+                                      QueuePublisher publisher,
+                                      BackoffCalculator backoffCalculator) {
         this.scheduler = scheduler;
         this.notificationStatusService = notificationStatusService;
         this.props = props;

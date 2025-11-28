@@ -68,8 +68,13 @@ public class LegacyNotificationConfig {
     }
 
     @Bean
+    public NotificationStatusService notificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
+        return new NotificationStatusService(sendingRepository, notificationRepository);
+    }
+
+    @Bean
     public QueuePublisher queuePublisher(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryNotificationQueuePublisher(queue);
+        return new InMemoryQueuePublisher(queue);
     }
 
     @Bean

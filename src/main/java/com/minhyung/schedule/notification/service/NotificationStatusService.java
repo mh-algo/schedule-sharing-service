@@ -6,7 +6,6 @@ import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Service
 public class NotificationStatusService {
     private final NotificationSendingRepository sendingRepository;
     private final NotificationRepository notificationRepository;
