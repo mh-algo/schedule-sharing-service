@@ -73,4 +73,9 @@ notify:
     retry-delay-sec: 2
     max-retry-delay-sec: 60
     max-attempts: 5
-    batch-size: 200
+    batch-size: 50
+  outbox:
+    claimer:
+      base-interval-ms: 50
+      max-interval-ms: 300
+      batch-size: 50

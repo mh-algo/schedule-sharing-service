@@ -7,7 +7,8 @@ public enum SendingStatus implements CodeEnum<Byte> {
     READY(1),           // 준비
     PROGRESSING(2),     // 진행
     SENT(3),            // 전송
-    FAILED(4);          // 실패
+    FAILED(4),          // 실패
+    RETRY_PENDING(5);   // 재시도
 
     private final byte code;
 

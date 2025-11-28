@@ -11,14 +11,14 @@ import java.util.concurrent.BlockingQueue;
 
 @Slf4j
 @RequiredArgsConstructor
-public class InMemoryNotificationQueuePublisher implements QueuePublisher {
-    private final BlockingQueue<QueueMessage> notificationQueue;
+public class InMemoryQueuePublisher implements QueuePublisher {
+    private final BlockingQueue<QueueMessage> queue;
 
     @Override
     public boolean publish(QueueMessage message) {
-        boolean published = notificationQueue.offer(message);
+        boolean published = queue.offer(message);
         if (!published) {
-            log.warn("notificationQueue is full");
+            log.warn("Queue is full");
         }
         return published;
     }
@@ -31,8 +31,12 @@ public class InMemoryNotificationQueuePublisher implements QueuePublisher {
 
             // 큐 삽입 실패
             if (!published) {
-                failed.add(QueueFailed.of(message.sendingId(), message.attempt()));
+                failed.add(QueueFailed.of(message.id(), message.attempt()));
             }
+        }
+
+        if (!failed.isEmpty()) {
+            log.warn("Queue is full! failed count: {}", failed.size());
         }
         return failed;
     }
