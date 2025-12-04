@@ -1,9 +1,6 @@
 package com.minhyung.schedule.notification.scheduler;
 
-import com.minhyung.schedule.notification.domain.QueueFailed;
-import com.minhyung.schedule.notification.domain.NotificationRetryInfo;
-import com.minhyung.schedule.notification.domain.QueueMessage;
-import com.minhyung.schedule.notification.domain.RetryInfo;
+import com.minhyung.schedule.notification.domain.*;
 import com.minhyung.schedule.notification.props.NotifyRetryProps;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.service.NotificationStatusService;
@@ -86,7 +83,7 @@ public class NotificationRetryScheduler {
                     for (NotificationRetryInfo notificationRetryInfo : notificationRetryInfoList) {
                         RetryInfo retryInfo = retryInfoMap.get(notificationRetryInfo.id());
                         if (retryInfo != null) {
-                            messages.add(QueueMessage.of(notificationRetryInfo.id(), notificationRetryInfo.receiverId(),
+                            messages.add(NotificationQueueMessage.of(notificationRetryInfo.id(), notificationRetryInfo.receiverId(),
                                     notificationRetryInfo.payload(), retryInfo.attempt()));
                         } else {
                             log.warn("id number mismatch (NotificationRetryInfo: {})", notificationRetryInfo.id());

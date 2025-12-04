@@ -43,10 +43,10 @@ public class LegacyNotificationConfig {
     }
 
     @Bean
-    public NotificationPreparedEventHandler notificationPreparedEventHandler(QueuePublisher queuePublisher,
+    public NotificationPreparedEventHandler notificationPreparedEventHandler(@Qualifier("queuePublisher") QueuePublisher publisher,
                                                                              NotificationStatusService notificationStatusService,
                                                                              BackoffCalculator backoffCalculator) {
-        return new NotificationPreparedEventHandler(queuePublisher, notificationStatusService, backoffCalculator);
+        return new NotificationPreparedEventHandler(publisher, notificationStatusService, backoffCalculator);
     }
 
     @Bean
@@ -62,7 +62,7 @@ public class LegacyNotificationConfig {
     public NotificationRetryScheduler notificationRetryScheduler(@Qualifier("retryScheduler") ThreadPoolTaskScheduler scheduler,
                                                                  NotificationStatusService notificationStatusService,
                                                                  NotifyRetryProps props,
-                                                                 QueuePublisher publisher,
+                                                                 @Qualifier("queuePublisher") QueuePublisher publisher,
                                                                  BackoffCalculator backoffCalculator) {
         return new NotificationRetryScheduler(scheduler, notificationStatusService, props, publisher, backoffCalculator);
     }

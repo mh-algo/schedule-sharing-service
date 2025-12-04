@@ -1,6 +1,6 @@
 package com.minhyung.schedule.notification.handler;
 
-import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.service.NotificationStatusService;
@@ -21,7 +21,7 @@ public class NotificationPreparedEventHandler {
         Long sendingId = event.sendingId();
 
         Integer attempt = event.attempt();
-        boolean published = queuePublisher.publish(QueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
+        boolean published = queuePublisher.publish(NotificationQueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
 
         // sending 상태 변경 또는 큐 삽입 실패
         if (!published) {

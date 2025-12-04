@@ -36,7 +36,7 @@ public class NotificationWorker {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    protected void start() {
+    private void start() {
         if (running.compareAndSet(false, true)) {
             int n = Math.max(1, executor.getCorePoolSize());
             log.debug("ThreadPoolSize: {}", n);
@@ -47,12 +47,12 @@ public class NotificationWorker {
     }
 
     @PreDestroy
-    protected void stop() {
+    private void stop() {
         running.set(false);
         executor.shutdown();    // 스레드 풀 종료
     }
 
-    protected void consume() {
+    private void consume() {
         Thread currentThread = Thread.currentThread();
         while (running.get()) {
             try {
