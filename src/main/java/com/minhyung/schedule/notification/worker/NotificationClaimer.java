@@ -1,6 +1,7 @@
 package com.minhyung.schedule.notification.worker;
 
 import com.minhyung.schedule.notification.domain.OutboxInfo;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.domain.QueueMessage;
 import com.minhyung.schedule.notification.props.NotifyOutboxClaimerProps;
 import com.minhyung.schedule.notification.service.NotificationOutboxService;
@@ -30,7 +31,7 @@ public class NotificationClaimer {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    protected void start() {
+    private void start() {
         if (running.compareAndSet(false, true)) {
             int n = Math.max(1, executor.getCorePoolSize());
             log.debug("ThreadPoolSize: {}", n);
@@ -41,12 +42,12 @@ public class NotificationClaimer {
     }
 
     @PreDestroy
-    protected void stop() {
+    private void stop() {
         running.set(false);
         executor.shutdown();    // 스레드 풀 종료
     }
 
-    protected void task() {
+    private void task() {
         int count = 0;
         Thread currentThread = Thread.currentThread();
         while (running.get()) {
@@ -61,7 +62,7 @@ public class NotificationClaimer {
 
                 count = 0;
                 List<QueueMessage> queueMessages = outboxInfoList.stream()
-                        .map(QueueMessage::from)
+                        .map(message -> (QueueMessage) NotificationQueueMessage.from(message))
                         .toList();
 
                 queuePublisher.publishAll(queueMessages);

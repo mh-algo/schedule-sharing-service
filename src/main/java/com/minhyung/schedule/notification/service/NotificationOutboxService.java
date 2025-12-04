@@ -1,7 +1,6 @@
 package com.minhyung.schedule.notification.service;
 
 import com.minhyung.schedule.notification.domain.OutboxInfo;
-import com.minhyung.schedule.notification.domain.SendingStatus;
 import com.minhyung.schedule.notification.domain.entity.NotificationOutboxEntity;
 import com.minhyung.schedule.notification.props.NotifyLeaseProps;
 import com.minhyung.schedule.notification.repository.NotificationOutboxRepository;
@@ -23,10 +22,8 @@ public class NotificationOutboxService {
     @Transactional
     public List<OutboxInfo> claimBatch(int batchSize) {
         // 전송할 알림 outbox 조회
-        List<NotificationOutboxEntity> outboxList = notificationOutboxRepository.findReadyForClaim(
-                List.of(SendingStatus.READY, SendingStatus.RETRY_PENDING),
-                PageRequest.of(0, batchSize)
-        );
+        List<NotificationOutboxEntity> outboxList =
+                notificationOutboxRepository.findReadyForClaim(PageRequest.of(0, batchSize));
 
         if (outboxList.isEmpty()) {
             return List.of();
@@ -50,5 +47,16 @@ public class NotificationOutboxService {
                         entity.getPayload(),
                         entity.getAttempt()
                 )).toList();
+    }
+
+    @Transactional
+    public int deleteAll(List<Long> ids) {
+        if (ids.isEmpty()) return 0;
+        return notificationOutboxRepository.deleteAllByIds(ids);
+    }
+
+    @Transactional
+    public int updateRetryPending(Long id, LocalDateTime nextPushAt, String error) {
+        return notificationOutboxRepository.updateRetryPending(id, nextPushAt, error);
     }
 }

@@ -7,11 +7,12 @@ import com.minhyung.schedule.notification.handler.InviteNotificationOutboxEventH
 import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler;
 import com.minhyung.schedule.notification.props.NotifyLeaseProps;
 import com.minhyung.schedule.notification.props.NotifyOutboxClaimerProps;
+import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
 import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationOutboxRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.service.*;
-import com.minhyung.schedule.notification.worker.NotificationClaimer;
+import com.minhyung.schedule.notification.worker.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -55,13 +56,79 @@ public class NotificationConfig {
     }
 
     @Bean
+    public NotificationSenderWorker notificationSenderWorker(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue,
+                                                             @Qualifier("notificationSenderExecutor") ThreadPoolTaskExecutor executor,
+                                                             SseService sseService,
+                                                             @Qualifier("successQueuePublisher") QueuePublisher successQueuePublisher,
+                                                             @Qualifier("failureQueuePublisher") QueuePublisher failureQueuePublisher,
+                                                             @Qualifier("retryQueuePublisher") QueuePublisher retryQueuePublisher
+    ) {
+        return new NotificationSenderWorker(queue, executor, sseService, successQueuePublisher, failureQueuePublisher, retryQueuePublisher);
+    }
+
+    @Bean
+    public NotificationOutboxCommitter notificationSuccessCommitter(@Qualifier("notificationSuccessExecutor") ThreadPoolTaskExecutor executor,
+                                                                    NotifyOutboxCommitterProps props,
+                                                                    @Qualifier("successQueue") BlockingQueue<QueueMessage> successQueue,
+                                                                    NotificationOutboxService outboxService) {
+        return new NotificationSuccessCommitter(executor, props, successQueue, outboxService);
+    }
+
+    @Bean
+    public NotificationOutboxCommitter notificationFailureCommitter(@Qualifier("notificationFailureExecutor") ThreadPoolTaskExecutor executor,
+                                                                    NotifyOutboxCommitterProps props,
+                                                                    @Qualifier("failureQueue") BlockingQueue<QueueMessage> failureQueue,
+                                                                    NotificationOutboxService outboxService) {
+        return new NotificationFailureCommitter(executor, props, failureQueue, outboxService);
+    }
+
+    @Bean
+    public NotificationOutboxCommitter notificationRetryCommitter(@Qualifier("notificationRetryExecutor") ThreadPoolTaskExecutor executor,
+                                                                  NotifyOutboxCommitterProps props,
+                                                                  @Qualifier("retryQueue") BlockingQueue<QueueMessage> retryQueue,
+                                                                  NotificationOutboxService outboxService,
+                                                                  BackoffCalculator backoffCalculator) {
+        return new NotificationRetryCommitter(executor, props, retryQueue, outboxService, backoffCalculator);
+    }
+
+    @Bean
     public QueuePublisher notificationQueuePublisher(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue) {
         return new InMemoryQueuePublisher(queue);
     }
 
     @Bean
     BlockingQueue<QueueMessage> notificationQueue() {
-        return new LinkedBlockingQueue<>(50000);
+        return new LinkedBlockingQueue<>(500);
+    }
+
+    @Bean
+    public QueuePublisher successQueuePublisher(@Qualifier("successQueue") BlockingQueue<QueueMessage> queue) {
+        return new InMemoryQueuePublisher(queue);
+    }
+
+    @Bean
+    BlockingQueue<QueueMessage> successQueue() {
+        return new LinkedBlockingQueue<>(500);
+    }
+
+    @Bean
+    public QueuePublisher failureQueuePublisher(@Qualifier("failureQueue") BlockingQueue<QueueMessage> queue) {
+        return new InMemoryQueuePublisher(queue);
+    }
+
+    @Bean
+    BlockingQueue<QueueMessage> failureQueue() {
+        return new LinkedBlockingQueue<>(500);
+    }
+
+    @Bean
+    public QueuePublisher retryQueuePublisher(@Qualifier("retryQueue") BlockingQueue<QueueMessage> queue) {
+        return new InMemoryQueuePublisher(queue);
+    }
+
+    @Bean
+    BlockingQueue<QueueMessage> retryQueue() {
+        return new LinkedBlockingQueue<>(500);
     }
 
     @Bean
@@ -80,10 +147,52 @@ public class NotificationConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(100);
+        executor.setQueueCapacity(0);
         executor.setThreadNamePrefix("notify-");
-        executor.setWaitForTasksToCompleteOnShutdown(true);     // 작업 대기 후 종료
-        executor.setAwaitTerminationSeconds(30);        // 대기 시간 30초
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor notificationSenderExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(8);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("notify-sender-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor notificationSuccessExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("notify-success-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor notificationFailureExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("notify-failure-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor notificationRetryExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("notify-retry-");
         executor.initialize();
         return executor;
     }

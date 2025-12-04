@@ -79,3 +79,7 @@ notify:
       base-interval-ms: 50
       max-interval-ms: 300
       batch-size: 50
+    committer:
+      base-interval-ms: 50
+      max-interval-ms: 300
+      batch-size: 50
