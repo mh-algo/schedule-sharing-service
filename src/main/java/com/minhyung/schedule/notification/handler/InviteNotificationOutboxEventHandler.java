@@ -6,10 +6,12 @@ import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
 import com.minhyung.schedule.notification.event.InvitationCreatedEvent;
 import com.minhyung.schedule.notification.event.NotificationEvent;
 import com.minhyung.schedule.notification.service.NotificationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+@Slf4j
 public class InviteNotificationOutboxEventHandler implements NotificationCreateEventHandler {
     private final NotificationService notificationService;
     private final PayloadEncoderRegistry payloadEncoderRegistry;
@@ -38,7 +40,16 @@ public class InviteNotificationOutboxEventHandler implements NotificationCreateE
         if (notificationEvent instanceof InvitationCreatedEvent event) {
             // 알림 및 알림 전송 정보 생성
             NotificationData data = toNotification(event);
+
+            long start = System.nanoTime();
+
             notificationService.createNotification(data);
+
+            long end = System.nanoTime();
+            long taskMs = (end - start) / 1_000_000;
+            if (taskMs >= 500) {
+                log.warn("[INVITE NOTIFICATION] save={}ms", taskMs);
+            }
         }
     }
 }

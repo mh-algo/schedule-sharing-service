@@ -18,7 +18,7 @@ public class InMemoryQueuePublisher implements QueuePublisher {
     public boolean publish(QueueMessage message) {
         boolean published = queue.offer(message);
         if (!published) {
-            log.warn("Queue is full");
+            log.debug("Queue is full");
         }
         return published;
     }
@@ -36,7 +36,7 @@ public class InMemoryQueuePublisher implements QueuePublisher {
         }
 
         if (!failed.isEmpty()) {
-            log.warn("Queue is full! failed count: {}", failed.size());
+            log.debug("Queue is full! failed count: {}", failed.size());
         }
         return failed;
     }

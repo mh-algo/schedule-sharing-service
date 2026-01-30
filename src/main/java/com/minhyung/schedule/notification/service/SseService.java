@@ -84,7 +84,7 @@ public class SseService {
     public SendResult sendNotification(long receiverId, long sendingId, Object data) {
         emitterRepository.cacheEvent(receiverId, sendingId, data);
         Map<Long, SseEmitter> emitters = emitterRepository.findAllByUserId(receiverId);
-        log.info("emitters size = {}", emitters.size());
+        log.debug("emitters size = {}", emitters.size());
 
         int success = 0;
         String lastErr = null;
@@ -93,7 +93,7 @@ public class SseService {
             Long emitterId = entry.getKey();
             SseEmitter emitter = entry.getValue();
             try {
-                log.info("Send Notification (receiverId: {}, id: {})", receiverId, emitterId);
+                log.debug("Send Notification (receiverId: {}, id: {})", receiverId, emitterId);
                 send(emitter, sendingId, data, getCleanup(receiverId, emitterId));
                 success++;
             } catch (IOException e) {

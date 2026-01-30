@@ -73,13 +73,21 @@ public class ScheduleGroupService {
         GroupEntity group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
 
+        long findGroup = System.currentTimeMillis();
+
         // 초대한 사람 (초대한 사람이 그룹 소속인지 검증)
         UserEntity inviter = groupMemberRepository.findInviterCandidate(userId, groupId)
                 .orElseThrow(() -> new ApiException(GroupErrorCode.INVALID_ACCESS));
 
+//        UserEntity inviter = userRepository.findById(userId).get();
+
+        long findInviter = System.currentTimeMillis();
+
         // 초대 받는 사람
         UserEntity invitee = userRepository.findInvitableUser(request.username(), groupId)
                 .orElseThrow(() -> new ApiException(GroupErrorCode.USER_ALREADY_EXISTS_OR_INVITED));
+
+        long findInvitee = System.currentTimeMillis();
 
         // 그룹 초대 생성
         GroupInviteEntity entity = GroupInviteEntity.builder()
@@ -90,6 +98,8 @@ public class ScheduleGroupService {
                 .build();
 
         GroupInviteEntity invite = groupInviteRepository.save(entity);
+
+        long savedInviteInfo = System.currentTimeMillis();
 
         // 초대 알림 이벤트 발행
         InvitationCreatedEvent event = InvitationCreatedEvent.builder()
@@ -104,6 +114,17 @@ public class ScheduleGroupService {
                 .build();
 
         eventPublisher.publishEvent(event);
-        log.debug("[INVITE] total service time = {} ms", (System.currentTimeMillis() - start));
+
+        long afterEventPublish = System.currentTimeMillis();
+
+//        log.debug("[INVITE] total service time = {} ms", (System.currentTimeMillis() - start));
+        log.debug("[INVITE] total={}, group={}, inviter={}, invitee={}, save={}, event={}",
+                (afterEventPublish - start),
+                (findGroup - start),
+                (findInviter - findGroup),
+                (findInvitee - findInviter),
+                (savedInviteInfo - findInvitee),
+                (afterEventPublish - savedInviteInfo)
+        );
     }
 }

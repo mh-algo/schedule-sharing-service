@@ -18,7 +18,7 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
         where (no.status = com.minhyung.schedule.notification.domain.SendingStatus.READY
                 or (no.status = com.minhyung.schedule.notification.domain.SendingStatus.RETRY_PENDING and no.nextPushAt <= CURRENT_TIMESTAMP))
             and (no.leaseUntil is null or no.leaseUntil < CURRENT_TIMESTAMP)
-        order by no.id
+        order by no.nextPushAt, no.id
     """)
     List<NotificationOutboxEntity> findReadyForClaim(Pageable pageable);
 

@@ -20,26 +20,26 @@ CREATE TEMPORARY TABLE IF NOT EXISTS tmp_id(
 );
 
 # 세션의 최대 재귀 깊이 설정
-SET SESSION cte_max_recursion_depth = 50000;
+SET SESSION cte_max_recursion_depth = 300000;
 
-# 10001 ~ 60000
+# 10001 ~ 310000
 INSERT IGNORE INTO tmp_id
 WITH RECURSIVE user_number AS (
     SELECT 10001 AS n
     UNION ALL
     SELECT n + 1
     FROM user_number
-    WHERE n < 60000
+    WHERE n < 310000
 )
 SELECT n FROM user_number;
 
-# username10001 ~ username60000 계정 생성
+# user10001 ~ user310000 계정 생성
 # 비밀번호 password123!
 INSERT IGNORE INTO users(id, username, password)
 SELECT id, CONCAT('user', id), '{bcrypt}$2a$10$PrHZVi1wqb.7NZmJCZYJ7.EI66rfqnDHyej.M1Z7ne5kf5HZp.xx.'
 FROM tmp_id;
 
-# username10001 ~ username60000 소유의 그룹을 각각 1개씩 생성
+# user10001 ~ user310000 소유의 그룹을 각각 1개씩 생성
 INSERT IGNORE INTO `groups`(id, owner_id, name)
 SELECT id, id, CONCAT('group', id)
 FROM tmp_id;

@@ -1,6 +1,6 @@
 package com.minhyung.schedule.notification.config;
 
-import com.minhyung.schedule.auth.service.UserService;
+import com.minhyung.schedule.log.AsyncExecStats;
 import com.minhyung.schedule.notification.domain.QueueMessage;
 import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
 import com.minhyung.schedule.notification.handler.InviteNotificationOutboxEventHandler;
@@ -8,11 +8,12 @@ import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler
 import com.minhyung.schedule.notification.props.NotifyLeaseProps;
 import com.minhyung.schedule.notification.props.NotifyOutboxClaimerProps;
 import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
-import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationOutboxRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.service.*;
 import com.minhyung.schedule.notification.worker.*;
+import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Slf4j
 @Configuration
 @ConditionalOnProperty(name = "notify.mode", havingValue="outbox", matchIfMissing=true)
 public class NotificationConfig {
@@ -36,9 +38,8 @@ public class NotificationConfig {
     @Bean
     public NotificationService invitationNotificationOutboxService(NotificationRepository notificationRepository,
                                                                    NotificationOutboxRepository outboxRepository,
-                                                                   NotificationMessageRepository messageRepository,
-                                                                   UserService userService) {
-        return new InvitationNotificationOutboxService(notificationRepository, outboxRepository, messageRepository, userService);
+                                                                   EntityManager em) {
+        return new InvitationNotificationOutboxService(notificationRepository, outboxRepository, em);
     }
 
     @Bean
@@ -132,12 +133,29 @@ public class NotificationConfig {
     }
 
     @Bean
-    public ThreadPoolTaskExecutor defaultAsyncExecutor() {
+    public ThreadPoolTaskExecutor defaultAsyncExecutor(AsyncExecStats stats) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(8);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(200);
+        executor.setCorePoolSize(32);
+        executor.setMaxPoolSize(32);
+        executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("async-");
+
+        executor.setTaskDecorator(r -> {
+            long submittedAt = System.nanoTime();
+            return () -> {
+                long start = System.nanoTime();
+                long queueDelayMs = (start - submittedAt) / 1_000_000;
+                try {
+                    r.run();
+                } finally {
+                    long runTimeMs = (System.nanoTime() - start) / 1_000_000;
+
+                    // 작업 시간 기록
+                    stats.record(queueDelayMs, runTimeMs);
+                }
+            };
+        });
+
         executor.initialize();
         return executor;
     }
