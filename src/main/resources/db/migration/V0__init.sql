@@ -84,7 +84,7 @@ CREATE TABLE `notification_messages` (
 
 CREATE TABLE `notifications` (
     `id`	BIGINT	NOT NULL AUTO_INCREMENT,
-    `message_id`	BIGINT	NOT NULL,
+    `message_id`	BIGINT,
     `receiver_id`	BIGINT	NOT NULL,
     `target_type`	TINYINT	NOT NULL,
     `target_id`	BIGINT	NOT NULL	COMMENT 'type에 해당하는 id',
