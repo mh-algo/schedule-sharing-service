@@ -1,18 +1,20 @@
-package com.minhyung.schedule.notification.config;
+package com.minhyung.schedule.notification.legacy.config;
 
 import com.minhyung.schedule.auth.service.UserService;
 import com.minhyung.schedule.notification.domain.QueueMessage;
 import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
-import com.minhyung.schedule.notification.handler.InviteNotificationCreateEventHandler;
+import com.minhyung.schedule.notification.legacy.handler.LegacyInviteNotificationCreateEventHandler;
 import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler;
-import com.minhyung.schedule.notification.handler.NotificationPreparedEventHandler;
+import com.minhyung.schedule.notification.legacy.handler.LegacyNotificationPreparedEventHandler;
+import com.minhyung.schedule.notification.legacy.service.LegacyInvitationNotificationService;
+import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
 import com.minhyung.schedule.notification.props.NotifyRetryProps;
 import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
-import com.minhyung.schedule.notification.scheduler.NotificationRetryScheduler;
+import com.minhyung.schedule.notification.legacy.scheduler.LegacyNotificationRetryScheduler;
 import com.minhyung.schedule.notification.service.*;
-import com.minhyung.schedule.notification.worker.NotificationWorker;
+import com.minhyung.schedule.notification.legacy.worker.LegacyNotificationWorker;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,6 +26,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@Deprecated(forRemoval = true)
 @Configuration
 @ConditionalOnProperty(name = "notify.mode", havingValue="legacy")
 public class LegacyNotificationConfig {
@@ -31,7 +34,7 @@ public class LegacyNotificationConfig {
     public NotificationCreateEventHandler notificationCreateEventHandler(@Qualifier("invitationNotificationService") NotificationService notificationService,
                                                                                                  ApplicationEventPublisher publisher,
                                                                                                  PayloadEncoderRegistry payloadEncoderRegistry) {
-        return new InviteNotificationCreateEventHandler(notificationService, publisher, payloadEncoderRegistry);
+        return new LegacyInviteNotificationCreateEventHandler(notificationService, publisher, payloadEncoderRegistry);
     }
 
     @Bean
@@ -39,37 +42,37 @@ public class LegacyNotificationConfig {
                                                              NotificationSendingRepository sendingRepository,
                                                              NotificationMessageRepository messageRepository,
                                                              UserService userService) {
-        return new InvitationNotificationService(notificationRepository, sendingRepository, messageRepository, userService);
+        return new LegacyInvitationNotificationService(notificationRepository, sendingRepository, messageRepository, userService);
     }
 
     @Bean
-    public NotificationPreparedEventHandler notificationPreparedEventHandler(@Qualifier("queuePublisher") QueuePublisher publisher,
-                                                                             NotificationStatusService notificationStatusService,
-                                                                             BackoffCalculator backoffCalculator) {
-        return new NotificationPreparedEventHandler(publisher, notificationStatusService, backoffCalculator);
+    public LegacyNotificationPreparedEventHandler notificationPreparedEventHandler(@Qualifier("queuePublisher") QueuePublisher publisher,
+                                                                                   LegacyNotificationStatusService legacyNotificationStatusService,
+                                                                                   BackoffCalculator backoffCalculator) {
+        return new LegacyNotificationPreparedEventHandler(publisher, legacyNotificationStatusService, backoffCalculator);
     }
 
     @Bean
-    public NotificationWorker notificationWorker(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue,
-                                                 @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
-                                                 SseService sseService,
-                                                 NotificationStatusService notificationStatusService,
-                                                 BackoffCalculator backoffCalculator) {
-        return new NotificationWorker(queue, executor, sseService, notificationStatusService, backoffCalculator);
+    public LegacyNotificationWorker notificationWorker(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue,
+                                                       @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
+                                                       SseService sseService,
+                                                       LegacyNotificationStatusService legacyNotificationStatusService,
+                                                       BackoffCalculator backoffCalculator) {
+        return new LegacyNotificationWorker(queue, executor, sseService, legacyNotificationStatusService, backoffCalculator);
     }
 
     @Bean
-    public NotificationRetryScheduler notificationRetryScheduler(@Qualifier("retryScheduler") ThreadPoolTaskScheduler scheduler,
-                                                                 NotificationStatusService notificationStatusService,
-                                                                 NotifyRetryProps props,
-                                                                 @Qualifier("queuePublisher") QueuePublisher publisher,
-                                                                 BackoffCalculator backoffCalculator) {
-        return new NotificationRetryScheduler(scheduler, notificationStatusService, props, publisher, backoffCalculator);
+    public LegacyNotificationRetryScheduler notificationRetryScheduler(@Qualifier("retryScheduler") ThreadPoolTaskScheduler scheduler,
+                                                                       LegacyNotificationStatusService legacyNotificationStatusService,
+                                                                       NotifyRetryProps props,
+                                                                       @Qualifier("queuePublisher") QueuePublisher publisher,
+                                                                       BackoffCalculator backoffCalculator) {
+        return new LegacyNotificationRetryScheduler(scheduler, legacyNotificationStatusService, props, publisher, backoffCalculator);
     }
 
     @Bean
-    public NotificationStatusService notificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
-        return new NotificationStatusService(sendingRepository, notificationRepository);
+    public LegacyNotificationStatusService notificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
+        return new LegacyNotificationStatusService(sendingRepository, notificationRepository);
     }
 
     @Bean

@@ -1,4 +1,4 @@
-package com.minhyung.schedule.notification.service;
+package com.minhyung.schedule.notification.legacy.service;
 
 import com.minhyung.schedule.notification.domain.NotificationRetryInfo;
 import com.minhyung.schedule.notification.domain.RetryInfo;
@@ -12,15 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated(forRemoval = true)
 @Slf4j
-public class NotificationStatusService {
+public class LegacyNotificationStatusService {
     private final NotificationSendingRepository sendingRepository;
     private final NotificationRepository notificationRepository;
 
     @Value("${notify.lease.seconds}")
     private int leaseSec;
 
-    public NotificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
+    public LegacyNotificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
         this.sendingRepository = sendingRepository;
         this.notificationRepository = notificationRepository;
     }

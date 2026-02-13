@@ -1,4 +1,4 @@
-package com.minhyung.schedule.notification.handler;
+package com.minhyung.schedule.notification.legacy.handler;
 
 import com.minhyung.schedule.notification.domain.MessageType;
 import com.minhyung.schedule.notification.domain.NotificationData;
@@ -7,20 +7,22 @@ import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
 import com.minhyung.schedule.notification.event.InvitationCreatedEvent;
 import com.minhyung.schedule.notification.event.NotificationEvent;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
+import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler;
 import com.minhyung.schedule.notification.service.NotificationService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-public class InviteNotificationCreateEventHandler implements NotificationCreateEventHandler {
+@Deprecated(forRemoval = true)
+public class LegacyInviteNotificationCreateEventHandler implements NotificationCreateEventHandler {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher publisher;
     private final PayloadEncoderRegistry payloadEncoderRegistry;
 
-    public InviteNotificationCreateEventHandler(NotificationService notificationService,
-                                                ApplicationEventPublisher publisher,
-                                                PayloadEncoderRegistry payloadEncoderRegistry) {
+    public LegacyInviteNotificationCreateEventHandler(NotificationService notificationService,
+                                                      ApplicationEventPublisher publisher,
+                                                      PayloadEncoderRegistry payloadEncoderRegistry) {
         this.notificationService = notificationService;
         this.publisher = publisher;
         this.payloadEncoderRegistry = payloadEncoderRegistry;

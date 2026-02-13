@@ -1,19 +1,20 @@
-package com.minhyung.schedule.notification.handler;
+package com.minhyung.schedule.notification.legacy.handler;
 
 import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
-import com.minhyung.schedule.notification.service.NotificationStatusService;
+import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
 import com.minhyung.schedule.notification.service.QueuePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 
+@Deprecated(forRemoval = true)
 @Slf4j
 @RequiredArgsConstructor
-public class NotificationPreparedEventHandler {
+public class LegacyNotificationPreparedEventHandler {
     private final QueuePublisher queuePublisher;
-    private final NotificationStatusService notificationStatusService;
+    private final LegacyNotificationStatusService legacyNotificationStatusService;
     private final BackoffCalculator backoffCalculator;
 
     @EventListener
@@ -31,7 +32,7 @@ public class NotificationPreparedEventHandler {
             long backoff = backoffCalculator.calculate(attempt);
 
             // 나중에 재시도 할 수 있도록 sending 상태를 RETRY_PENDING로 변경
-            boolean changedRetry = notificationStatusService.changeRetryPending(sendingId, errorMessage, backoff, attempt);
+            boolean changedRetry = legacyNotificationStatusService.changeRetryPending(sendingId, errorMessage, backoff, attempt);
             if (!changedRetry) {
                 log.warn("failed to change RETRY_PENDING: {}", sendingId);
             }

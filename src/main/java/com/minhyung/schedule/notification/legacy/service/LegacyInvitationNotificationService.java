@@ -1,4 +1,4 @@
-package com.minhyung.schedule.notification.service;
+package com.minhyung.schedule.notification.legacy.service;
 
 import com.minhyung.schedule.auth.domain.entity.UserEntity;
 import com.minhyung.schedule.auth.exception.UserNotFoundException;
@@ -14,13 +14,15 @@ import com.minhyung.schedule.notification.domain.entity.NotificationSendingEntit
 import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
+import com.minhyung.schedule.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+@Deprecated(forRemoval = true)
 @Slf4j
 @RequiredArgsConstructor
-public class InvitationNotificationService implements NotificationService {
+public class LegacyInvitationNotificationService implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationSendingRepository sendingRepository;
     private final NotificationMessageRepository messageRepository;

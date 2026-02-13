@@ -1,9 +1,9 @@
-package com.minhyung.schedule.notification.scheduler;
+package com.minhyung.schedule.notification.legacy.scheduler;
 
 import com.minhyung.schedule.notification.domain.*;
 import com.minhyung.schedule.notification.props.NotifyRetryProps;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
-import com.minhyung.schedule.notification.service.NotificationStatusService;
+import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
 import com.minhyung.schedule.notification.service.QueuePublisher;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +18,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Deprecated(forRemoval = true)
 @Slf4j
-public class NotificationRetryScheduler {
+public class LegacyNotificationRetryScheduler {
     private final ThreadPoolTaskScheduler scheduler;
-    private final NotificationStatusService notificationStatusService;
+    private final LegacyNotificationStatusService legacyNotificationStatusService;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final NotifyRetryProps props;
     private final QueuePublisher publisher;
     private final BackoffCalculator backoffCalculator;
 
-    public NotificationRetryScheduler(ThreadPoolTaskScheduler scheduler,
-                                      NotificationStatusService notificationStatusService,
-                                      NotifyRetryProps props,
-                                      QueuePublisher publisher,
-                                      BackoffCalculator backoffCalculator) {
+    public LegacyNotificationRetryScheduler(ThreadPoolTaskScheduler scheduler,
+                                            LegacyNotificationStatusService legacyNotificationStatusService,
+                                            NotifyRetryProps props,
+                                            QueuePublisher publisher,
+                                            BackoffCalculator backoffCalculator) {
         this.scheduler = scheduler;
-        this.notificationStatusService = notificationStatusService;
+        this.legacyNotificationStatusService = legacyNotificationStatusService;
         this.props = props;
         this.publisher = publisher;
         this.backoffCalculator = backoffCalculator;
@@ -63,10 +64,10 @@ public class NotificationRetryScheduler {
                 int batchSize = props.batchSize();
 
                 // 점유 만료된 PROGRESSING 상태를 RETRY_PENDING 상태로 변경
-                notificationStatusService.changeProgressingExpiredToRetryPending(batchSize);
+                legacyNotificationStatusService.changeProgressingExpiredToRetryPending(batchSize);
 
                 // 최대 시도 횟수보다 작은 경우 READY, 클 경우 FAILED로 변경 후 재시도할 리스트 반환
-                List<RetryInfo> sendingRetryInfoList = notificationStatusService.changeRetryPendingToReadyOrFailed(batchSize, props.maxAttempts());
+                List<RetryInfo> sendingRetryInfoList = legacyNotificationStatusService.changeRetryPendingToReadyOrFailed(batchSize, props.maxAttempts());
 
                 // 재시도할 알림이 존재하는 경우
                 if (!sendingRetryInfoList.isEmpty()) {
@@ -75,7 +76,7 @@ public class NotificationRetryScheduler {
 
                     // notification 에서 수신자 id, payload 조회
                     List<Long> notificationIds = new ArrayList<>(retryInfoMap.keySet());
-                    List<NotificationRetryInfo> notificationRetryInfoList = notificationStatusService.findRetryInfoByNotificationIds(notificationIds);
+                    List<NotificationRetryInfo> notificationRetryInfoList = legacyNotificationStatusService.findRetryInfoByNotificationIds(notificationIds);
 
                     // sendingRetryInfo의 id와 NotificationRetryInfo의 notificationId가 일치할 경우 QueueMessage 생성
                     List<QueueMessage> messages = new ArrayList<>(notificationRetryInfoList.size());
@@ -101,7 +102,7 @@ public class NotificationRetryScheduler {
 
                         String errorMessage = "Queue publish failed";
                         long sendingId = failed.sendingId();
-                        boolean changedRetry = notificationStatusService.changeRetryPendingWhenQueuePublishFailed(sendingId, errorMessage, backoff, attempt);
+                        boolean changedRetry = legacyNotificationStatusService.changeRetryPendingWhenQueuePublishFailed(sendingId, errorMessage, backoff, attempt);
                         if (!changedRetry) {
                             log.warn("failed to change RETRY_PENDING: {}", sendingId);
                         }
