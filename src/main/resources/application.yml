@@ -13,12 +13,12 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_URL:localhost}:${DB_PORT:3306}/${DB_NAME:schedule_sharing_service}?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://${DB_URL:localhost}:${DB_PORT:3306}/${DB_NAME:schedule_sharing_service}?serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 50
-      minimum-idle: 50
+      maximum-pool-size: 70
+      minimum-idle: 70
 
   jpa:
     properties:
@@ -76,11 +76,15 @@ notify:
     max-attempts: 5
     batch-size: 50
   outbox:
+    create:
+      base-interval-ms: 50
+      max-interval-ms: 300
+      batch-size: 100
     claimer:
       base-interval-ms: 50
       max-interval-ms: 300
-      batch-size: 50
+      batch-size: 100
     committer:
       base-interval-ms: 50
       max-interval-ms: 300
-      batch-size: 50
+      batch-size: 100
