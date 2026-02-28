@@ -1,6 +1,6 @@
-package com.minhyung.schedule.notification.repository;
+package com.minhyung.schedule.notification.legacy.repository;
 
-import com.minhyung.schedule.notification.domain.RetryInfo;
+import com.minhyung.schedule.notification.legacy.domain.RetryInfo;
 import com.minhyung.schedule.notification.domain.entity.NotificationSendingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,7 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface NotificationSendingRepository extends JpaRepository<NotificationSendingEntity, Long> {
+@Deprecated(forRemoval = true)
+public interface LegacyNotificationSendingRepository extends JpaRepository<NotificationSendingEntity, Long> {
     /*
         status = 0: PENDING, 1: READY, 2: PROGRESSING, 3: SENT, 4: FAILED, 5: RETRY_PENDING
     */

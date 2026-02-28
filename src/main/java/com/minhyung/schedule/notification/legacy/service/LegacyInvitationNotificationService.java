@@ -13,7 +13,7 @@ import com.minhyung.schedule.notification.domain.entity.NotificationMessageEntit
 import com.minhyung.schedule.notification.domain.entity.NotificationSendingEntity;
 import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
-import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
+import com.minhyung.schedule.notification.legacy.repository.LegacyNotificationSendingRepository;
 import com.minhyung.schedule.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LegacyInvitationNotificationService implements NotificationService {
     private final NotificationRepository notificationRepository;
-    private final NotificationSendingRepository sendingRepository;
+    private final LegacyNotificationSendingRepository sendingRepository;
     private final NotificationMessageRepository messageRepository;
     private final UserService userService;
 

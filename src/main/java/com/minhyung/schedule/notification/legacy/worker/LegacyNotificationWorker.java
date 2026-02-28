@@ -1,6 +1,6 @@
 package com.minhyung.schedule.notification.legacy.worker;
 
-import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.domain.SendResult;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
@@ -17,14 +17,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Deprecated(forRemoval = true)
 @Slf4j
 public class LegacyNotificationWorker {
-    private final BlockingQueue<QueueMessage> queue;
+    private final BlockingQueue<NotificationQueueMessage> queue;
     private final ThreadPoolTaskExecutor executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final SseService sseService;
     private final LegacyNotificationStatusService legacyNotificationStatusService;
     private final BackoffCalculator backoffCalculator;
 
-    public LegacyNotificationWorker(BlockingQueue<QueueMessage> queue,
+    public LegacyNotificationWorker(BlockingQueue<NotificationQueueMessage> queue,
                                     ThreadPoolTaskExecutor executor,
                                     SseService sseService,
                                     LegacyNotificationStatusService legacyNotificationStatusService,
@@ -58,7 +58,7 @@ public class LegacyNotificationWorker {
         while (running.get()) {
             try {
                 long startTime = System.currentTimeMillis();
-                QueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
+                NotificationQueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
                 if (!running.get()) break;  // 종료 신호 반영
                 if (message == null) continue;    // 메시지 없으면 다음 루프
                 sendNotification(message);
@@ -71,7 +71,7 @@ public class LegacyNotificationWorker {
         }
     }
 
-    private void sendNotification(QueueMessage message) {
+    private void sendNotification(NotificationQueueMessage message) {
         long sendingId = message.id();
         int attempt = message.attempt();
 

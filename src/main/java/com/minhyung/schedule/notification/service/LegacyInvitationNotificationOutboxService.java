@@ -13,9 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+@Deprecated
 @Slf4j
 @RequiredArgsConstructor
-public class InvitationNotificationOutboxService implements NotificationService {
+public class LegacyInvitationNotificationOutboxService implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationOutboxRepository outboxRepository;
     private final EntityManager em;

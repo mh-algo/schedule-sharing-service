@@ -1,17 +1,19 @@
 package com.minhyung.schedule.notification.legacy.config;
 
 import com.minhyung.schedule.auth.service.UserService;
-import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
 import com.minhyung.schedule.notification.legacy.handler.LegacyInviteNotificationCreateEventHandler;
 import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler;
 import com.minhyung.schedule.notification.legacy.handler.LegacyNotificationPreparedEventHandler;
+import com.minhyung.schedule.notification.legacy.service.LegacyInMemoryQueuePublisher;
 import com.minhyung.schedule.notification.legacy.service.LegacyInvitationNotificationService;
 import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
+import com.minhyung.schedule.notification.legacy.service.LegacyQueuePublisher;
 import com.minhyung.schedule.notification.props.NotifyRetryProps;
 import com.minhyung.schedule.notification.repository.NotificationMessageRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
-import com.minhyung.schedule.notification.repository.NotificationSendingRepository;
+import com.minhyung.schedule.notification.legacy.repository.LegacyNotificationSendingRepository;
 import com.minhyung.schedule.notification.legacy.scheduler.LegacyNotificationRetryScheduler;
 import com.minhyung.schedule.notification.service.*;
 import com.minhyung.schedule.notification.legacy.worker.LegacyNotificationWorker;
@@ -26,34 +28,45 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * @deprecated
+ * 기존 방식은 알림 상태 변경을 건별 UPDATE로 즉시 수행하여
+ * 쓰기 부하가 집중되는 문제가 있었음.
+ *
+ * 또한 중복 검증 로직으로 인해 불필요한 조회 및 상태 변경이 반복적으로 발생했음.
+ *
+ * 현재는 Queue 기반 배치 처리 방식으로 전환하여
+ * 상태 변경을 집계 후 배치 UPDATE로 처리하고,
+ * 중복 검증 및 불필요한 상태 전환을 제거하여 성능을 개선함.
+ */
 @Deprecated(forRemoval = true)
 @Configuration
 @ConditionalOnProperty(name = "notify.mode", havingValue="legacy")
 public class LegacyNotificationConfig {
     @Bean
     public NotificationCreateEventHandler notificationCreateEventHandler(@Qualifier("invitationNotificationService") NotificationService notificationService,
-                                                                                                 ApplicationEventPublisher publisher,
-                                                                                                 PayloadEncoderRegistry payloadEncoderRegistry) {
+                                                                         ApplicationEventPublisher publisher,
+                                                                         PayloadEncoderRegistry payloadEncoderRegistry) {
         return new LegacyInviteNotificationCreateEventHandler(notificationService, publisher, payloadEncoderRegistry);
     }
 
     @Bean
     public NotificationService invitationNotificationService(NotificationRepository notificationRepository,
-                                                             NotificationSendingRepository sendingRepository,
+                                                             LegacyNotificationSendingRepository sendingRepository,
                                                              NotificationMessageRepository messageRepository,
                                                              UserService userService) {
         return new LegacyInvitationNotificationService(notificationRepository, sendingRepository, messageRepository, userService);
     }
 
     @Bean
-    public LegacyNotificationPreparedEventHandler notificationPreparedEventHandler(@Qualifier("queuePublisher") QueuePublisher publisher,
+    public LegacyNotificationPreparedEventHandler notificationPreparedEventHandler(@Qualifier("queuePublisher") LegacyQueuePublisher publisher,
                                                                                    LegacyNotificationStatusService legacyNotificationStatusService,
                                                                                    BackoffCalculator backoffCalculator) {
         return new LegacyNotificationPreparedEventHandler(publisher, legacyNotificationStatusService, backoffCalculator);
     }
 
     @Bean
-    public LegacyNotificationWorker notificationWorker(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue,
+    public LegacyNotificationWorker notificationWorker(@Qualifier("notificationQueue") BlockingQueue<NotificationQueueMessage> queue,
                                                        @Qualifier("notificationExecutor") ThreadPoolTaskExecutor executor,
                                                        SseService sseService,
                                                        LegacyNotificationStatusService legacyNotificationStatusService,
@@ -65,23 +78,24 @@ public class LegacyNotificationConfig {
     public LegacyNotificationRetryScheduler notificationRetryScheduler(@Qualifier("retryScheduler") ThreadPoolTaskScheduler scheduler,
                                                                        LegacyNotificationStatusService legacyNotificationStatusService,
                                                                        NotifyRetryProps props,
-                                                                       @Qualifier("queuePublisher") QueuePublisher publisher,
+                                                                       @Qualifier("queuePublisher") LegacyQueuePublisher publisher,
                                                                        BackoffCalculator backoffCalculator) {
         return new LegacyNotificationRetryScheduler(scheduler, legacyNotificationStatusService, props, publisher, backoffCalculator);
     }
 
     @Bean
-    public LegacyNotificationStatusService notificationStatusService(NotificationSendingRepository sendingRepository, NotificationRepository notificationRepository) {
+    public LegacyNotificationStatusService notificationStatusService(LegacyNotificationSendingRepository sendingRepository,
+                                                                     NotificationRepository notificationRepository) {
         return new LegacyNotificationStatusService(sendingRepository, notificationRepository);
     }
 
     @Bean
-    public QueuePublisher queuePublisher(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryQueuePublisher(queue);
+    public LegacyQueuePublisher queuePublisher(@Qualifier("notificationQueue") BlockingQueue<NotificationQueueMessage> queue) {
+        return new LegacyInMemoryQueuePublisher(queue);
     }
 
     @Bean
-    BlockingQueue<QueueMessage> notificationQueue() {
+    BlockingQueue<NotificationQueueMessage> notificationQueue() {
         return new LinkedBlockingQueue<>(50000);
     }
 

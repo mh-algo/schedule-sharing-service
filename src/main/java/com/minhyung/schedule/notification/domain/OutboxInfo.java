@@ -9,7 +9,7 @@ public record OutboxInfo(long id,
         return new OutboxInfo(id, receiverId, payload, attempt);
     }
 
-    public static OutboxInfo from(QueueMessage message) {
+    public static OutboxInfo from(NotificationQueueMessage message) {
         return new OutboxInfo(message.id(), message.receiverId(), message.payload(), message.attempt());
     }
 }

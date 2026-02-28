@@ -1,7 +1,7 @@
 package com.minhyung.schedule.notification.worker;
 
-import com.minhyung.schedule.notification.domain.QueueMessage;
-import com.minhyung.schedule.notification.domain.RetryQueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationRetryQueueMessage;
 import com.minhyung.schedule.notification.domain.SendResult;
 import com.minhyung.schedule.notification.service.QueuePublisher;
 import com.minhyung.schedule.notification.service.SseService;
@@ -19,13 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @RequiredArgsConstructor
 public class NotificationSenderWorker {
-    private final BlockingQueue<QueueMessage> queue;
+    private final BlockingQueue<NotificationQueueMessage> queue;
     private final ThreadPoolTaskExecutor executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final SseService sseService;
-    private final QueuePublisher successQueuePublisher;
-    private final QueuePublisher failureQueuePublisher;
-    private final QueuePublisher retryQueuePublisher;
+    private final QueuePublisher<NotificationQueueMessage> successQueuePublisher;
+    private final QueuePublisher<NotificationQueueMessage> failureQueuePublisher;
+    private final QueuePublisher<NotificationQueueMessage> retryQueuePublisher;
 
     @EventListener(ApplicationReadyEvent.class)
     protected void start() {
@@ -48,7 +48,7 @@ public class NotificationSenderWorker {
         Thread currentThread = Thread.currentThread();
         while (running.get()) {
             try {
-                QueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
+                NotificationQueueMessage message = queue.poll(300, TimeUnit.MILLISECONDS);
                 if (!running.get()) break;  // 종료 신호 반영
                 if (message == null) continue;    // 메시지 없으면 다음 루프
                 sendNotification(message);  // sse 전송
@@ -59,7 +59,7 @@ public class NotificationSenderWorker {
         }
     }
 
-    private void sendNotification(QueueMessage message) {
+    private void sendNotification(NotificationQueueMessage message) {
         // sse 전송
         SendResult sendResult = sseService.sendNotification(message.receiverId(), message.id(), message.payload());
 
@@ -69,7 +69,7 @@ public class NotificationSenderWorker {
             String lastErr = sendResult.lastErr();
             if (lastErr != null) {  // sse 전송 도중 에러가 발생한 경우
                 // 기존 객체에 lastErr 추가
-                RetryQueueMessage retryMessage = RetryQueueMessage.from(message, lastErr);
+                NotificationRetryQueueMessage retryMessage = NotificationRetryQueueMessage.from(message, lastErr);
                 retryQueuePublisher.publish(retryMessage);
             } else {    // SseEmitter가 존재하지 않아서 전송 실패한 경우
                 failureQueuePublisher.publish(message);

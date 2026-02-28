@@ -1,10 +1,10 @@
 package com.minhyung.schedule.notification.legacy.handler;
 
-import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.event.NotificationPreparedEvent;
+import com.minhyung.schedule.notification.legacy.domain.LegacyNotificationQueueMessage;
+import com.minhyung.schedule.notification.legacy.service.LegacyQueuePublisher;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
-import com.minhyung.schedule.notification.service.QueuePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -13,7 +13,7 @@ import org.springframework.context.event.EventListener;
 @Slf4j
 @RequiredArgsConstructor
 public class LegacyNotificationPreparedEventHandler {
-    private final QueuePublisher queuePublisher;
+    private final LegacyQueuePublisher queuePublisher;
     private final LegacyNotificationStatusService legacyNotificationStatusService;
     private final BackoffCalculator backoffCalculator;
 
@@ -22,7 +22,7 @@ public class LegacyNotificationPreparedEventHandler {
         Long sendingId = event.sendingId();
 
         Integer attempt = event.attempt();
-        boolean published = queuePublisher.publish(NotificationQueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
+        boolean published = queuePublisher.publish(LegacyNotificationQueueMessage.of(sendingId, event.receiverId(), event.payload(), attempt));
 
         // sending 상태 변경 또는 큐 삽입 실패
         if (!published) {

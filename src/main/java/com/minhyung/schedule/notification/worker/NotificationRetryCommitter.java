@@ -1,7 +1,7 @@
 package com.minhyung.schedule.notification.worker;
 
-import com.minhyung.schedule.notification.domain.QueueMessage;
-import com.minhyung.schedule.notification.domain.RetryQueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationRetryQueueMessage;
 import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.service.NotificationOutboxService;
@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 public class NotificationRetryCommitter extends NotificationOutboxCommitter {
-    private final BlockingQueue<QueueMessage> retryQueue;
+    private final BlockingQueue<NotificationQueueMessage> retryQueue;
     private final NotificationOutboxService outboxService;
     private final BackoffCalculator backoffCalculator;
 
     public NotificationRetryCommitter(ThreadPoolTaskExecutor executor,
                                       NotifyOutboxCommitterProps props,
-                                      BlockingQueue<QueueMessage> retryQueue,
+                                      BlockingQueue<NotificationQueueMessage> retryQueue,
                                       NotificationOutboxService outboxService,
                                       BackoffCalculator backoffCalculator) {
         super(executor, props);
@@ -28,9 +28,9 @@ public class NotificationRetryCommitter extends NotificationOutboxCommitter {
     }
 
     @Override
-    protected boolean task(List<QueueMessage> buffer) {
-        QueueMessage message = retryQueue.poll();
-        if (message instanceof RetryQueueMessage retryMessage) {
+    protected boolean task(List<NotificationQueueMessage> buffer) {
+        NotificationQueueMessage message = retryQueue.poll();
+        if (message instanceof NotificationRetryQueueMessage retryMessage) {
             long backoff = backoffCalculator.calculate(retryMessage.attempt());
             LocalDateTime nextPushAt = LocalDateTime.now().plusSeconds(backoff);
             int updated = outboxService.updateRetryPending(retryMessage.id(), nextPushAt, retryMessage.error());

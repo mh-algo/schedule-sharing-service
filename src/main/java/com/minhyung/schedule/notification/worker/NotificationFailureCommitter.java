@@ -1,6 +1,6 @@
 package com.minhyung.schedule.notification.worker;
 
-import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
 import com.minhyung.schedule.notification.service.NotificationOutboxService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +11,12 @@ import java.util.concurrent.BlockingQueue;
 
 @Slf4j
 public class NotificationFailureCommitter extends NotificationOutboxCommitter {
-    private final BlockingQueue<QueueMessage> failureQueue;
+    private final BlockingQueue<NotificationQueueMessage> failureQueue;
     private final NotificationOutboxService outboxService;
 
     public NotificationFailureCommitter(ThreadPoolTaskExecutor executor,
                                         NotifyOutboxCommitterProps props,
-                                        BlockingQueue<QueueMessage> failureQueue,
+                                        BlockingQueue<NotificationQueueMessage> failureQueue,
                                         NotificationOutboxService outboxService) {
         super(executor, props);
         this.failureQueue = failureQueue;
@@ -24,17 +24,17 @@ public class NotificationFailureCommitter extends NotificationOutboxCommitter {
     }
 
     @Override
-    public boolean task(List<QueueMessage> buffer) {
+    public boolean task(List<NotificationQueueMessage> buffer) {
         int count = failureQueue.drainTo(buffer, props().batchSize());
         if (count <= 0) {
             return false;
         }
 
         List<Long> ids = buffer.stream()
-                .map(QueueMessage::id)
+                .map(NotificationQueueMessage::id)
                 .toList();
         int deleted = outboxService.deleteAll(ids);
-        log.debug("Deleted {} outbox rows", deleted);
+         log.debug("Deleted {} outbox rows", deleted);
         return deleted > 0;
     }
 }

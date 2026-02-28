@@ -1,8 +1,8 @@
 package com.minhyung.schedule.notification.worker;
 
 import com.minhyung.schedule.notification.domain.OutboxInfo;
+import com.minhyung.schedule.notification.domain.NotificationClaimQueueMessage;
 import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
-import com.minhyung.schedule.notification.domain.QueueMessage;
 import com.minhyung.schedule.notification.props.NotifyOutboxClaimerProps;
 import com.minhyung.schedule.notification.service.NotificationOutboxService;
 import com.minhyung.schedule.notification.service.QueuePublisher;
@@ -17,13 +17,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class NotificationClaimer {
-    private final QueuePublisher queuePublisher;
+    private final QueuePublisher<NotificationQueueMessage> queuePublisher;
     private final ThreadPoolTaskExecutor executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final NotifyOutboxClaimerProps props;
     private final NotificationOutboxService outboxService;
 
-    public NotificationClaimer(QueuePublisher queuePublisher, ThreadPoolTaskExecutor executor, NotifyOutboxClaimerProps props, NotificationOutboxService outboxService) {
+    public NotificationClaimer(QueuePublisher<NotificationQueueMessage> queuePublisher, ThreadPoolTaskExecutor executor, NotifyOutboxClaimerProps props, NotificationOutboxService outboxService) {
         this.queuePublisher = queuePublisher;
         this.executor = executor;
         this.props = props;
@@ -61,8 +61,8 @@ public class NotificationClaimer {
                 }
 
                 count = 0;
-                List<QueueMessage> queueMessages = outboxInfoList.stream()
-                        .map(message -> (QueueMessage) NotificationQueueMessage.from(message))
+                List<NotificationQueueMessage> queueMessages = outboxInfoList.stream()
+                        .map(message -> (NotificationQueueMessage) NotificationClaimQueueMessage.from(message))
                         .toList();
 
                 queuePublisher.publishAll(queueMessages);

@@ -1,8 +1,10 @@
 package com.minhyung.schedule.notification.worker;
 
-import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
-import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
+import com.minhyung.schedule.notification.domain.NotificationCreateQueueMessage;
+import com.minhyung.schedule.notification.props.NotifyOutboxCreateProps;
+import com.minhyung.schedule.notification.repository.NotificationOutboxJdbcRepository;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -10,53 +12,56 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-public abstract class NotificationOutboxCommitter {
+@RequiredArgsConstructor
+public class NotificationCreateWorker {
+    private final BlockingQueue<NotificationCreateQueueMessage> notificationQueue;
     private final ThreadPoolTaskExecutor executor;
-    private final NotifyOutboxCommitterProps props;
+    private final NotifyOutboxCreateProps props;
+    private final NotificationOutboxJdbcRepository notificationOutboxJdbcRepository;
+
     private final AtomicBoolean running = new AtomicBoolean(false);
-    private final List<NotificationQueueMessage> buffer = new ArrayList<>();
+    private final List<NotificationCreateQueueMessage> buffer = new ArrayList<>();
     private int attempts = 0;
 
-    protected NotificationOutboxCommitter(ThreadPoolTaskExecutor executor, NotifyOutboxCommitterProps props) {
-        this.executor = executor;
-        this.props = props;
-    }
-
-    protected final NotifyOutboxCommitterProps props() {
-        return props;
-    }
-
     @EventListener(ApplicationReadyEvent.class)
-    private void start() {
+    protected void start() {
         if (running.compareAndSet(false, true)) {
             int n = Math.max(1, executor.getCorePoolSize());
             log.debug("ThreadPoolSize: {}", n);
             for (int i = 0; i < n; i++) {
-                executor.submit(this::run);
+                executor.submit(this::task);
             }
         }
     }
 
     @PreDestroy
-    private void stop() {
+    protected void stop() {
         running.set(false);
         executor.shutdown();    // 스레드 풀 종료
     }
 
-    private void run() {
+    private void task() {
         Thread currentThread = Thread.currentThread();
         while (running.get()) {
             try {
                 buffer.clear();
-                boolean worked = task(buffer);
+                int count = notificationQueue.drainTo(buffer, props.batchSize());
 
-                // task가 실행된 경우 시도 횟수 초기화
-                if (worked) {
+                if (!running.get()) break;  // 종료 신호 반영
+
+                // 큐에 데이터가 존재하는 경우 batch insert
+                if (count > 0) {
                     attempts = 0;
-                } else {
+
+                    // batch insert
+                    notificationOutboxJdbcRepository.batchInsert(buffer);
+                }
+                // 큐에 데이터가 존재하지 않는 경우 backoff 계산 후 sleep
+                else {
                     long backoff = calculateBackoff(++attempts);
                     Thread.sleep(backoff);
                 }
@@ -66,8 +71,6 @@ public abstract class NotificationOutboxCommitter {
             }
         }
     }
-
-    protected abstract boolean task(List<NotificationQueueMessage> buffer);
 
     protected long calculateBackoff(int attempts) {
         return Math.min(props.baseIntervalMs() * attempts, props.maxIntervalMs());

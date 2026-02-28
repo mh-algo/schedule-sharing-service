@@ -1,7 +1,7 @@
-package com.minhyung.schedule.notification.service;
+package com.minhyung.schedule.notification.legacy.service;
 
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.domain.QueueFailed;
-import com.minhyung.schedule.notification.domain.QueueMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,13 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
+@Deprecated(forRemoval = true)
 @Slf4j
 @RequiredArgsConstructor
-public class InMemoryQueuePublisher implements QueuePublisher {
-    private final BlockingQueue<QueueMessage> queue;
+public class LegacyInMemoryQueuePublisher implements LegacyQueuePublisher {
+    private final BlockingQueue<NotificationQueueMessage> queue;
 
     @Override
-    public boolean publish(QueueMessage message) {
+    public boolean publish(NotificationQueueMessage message) {
         boolean published = queue.offer(message);
         if (!published) {
             log.debug("Queue is full");
@@ -24,9 +25,9 @@ public class InMemoryQueuePublisher implements QueuePublisher {
     }
 
     @Override
-    public List<QueueFailed> publishAll(List<QueueMessage> messages) {
+    public List<QueueFailed> publishAll(List<NotificationQueueMessage> messages) {
         List<QueueFailed> failed = new ArrayList<>();
-        for (QueueMessage message : messages) {
+        for (NotificationQueueMessage message : messages) {
             boolean published = publish(message);
 
             // 큐 삽입 실패

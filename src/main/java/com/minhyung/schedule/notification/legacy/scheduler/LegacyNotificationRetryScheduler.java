@@ -1,10 +1,12 @@
 package com.minhyung.schedule.notification.legacy.scheduler;
 
 import com.minhyung.schedule.notification.domain.*;
+import com.minhyung.schedule.notification.legacy.domain.LegacyNotificationQueueMessage;
+import com.minhyung.schedule.notification.legacy.domain.RetryInfo;
+import com.minhyung.schedule.notification.legacy.service.LegacyQueuePublisher;
 import com.minhyung.schedule.notification.props.NotifyRetryProps;
 import com.minhyung.schedule.notification.service.BackoffCalculator;
 import com.minhyung.schedule.notification.legacy.service.LegacyNotificationStatusService;
-import com.minhyung.schedule.notification.service.QueuePublisher;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -25,13 +27,13 @@ public class LegacyNotificationRetryScheduler {
     private final LegacyNotificationStatusService legacyNotificationStatusService;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final NotifyRetryProps props;
-    private final QueuePublisher publisher;
+    private final LegacyQueuePublisher publisher;
     private final BackoffCalculator backoffCalculator;
 
     public LegacyNotificationRetryScheduler(ThreadPoolTaskScheduler scheduler,
                                             LegacyNotificationStatusService legacyNotificationStatusService,
                                             NotifyRetryProps props,
-                                            QueuePublisher publisher,
+                                            LegacyQueuePublisher publisher,
                                             BackoffCalculator backoffCalculator) {
         this.scheduler = scheduler;
         this.legacyNotificationStatusService = legacyNotificationStatusService;
@@ -79,12 +81,12 @@ public class LegacyNotificationRetryScheduler {
                     List<NotificationRetryInfo> notificationRetryInfoList = legacyNotificationStatusService.findRetryInfoByNotificationIds(notificationIds);
 
                     // sendingRetryInfo의 id와 NotificationRetryInfo의 notificationId가 일치할 경우 QueueMessage 생성
-                    List<QueueMessage> messages = new ArrayList<>(notificationRetryInfoList.size());
+                    List<NotificationQueueMessage> messages = new ArrayList<>(notificationRetryInfoList.size());
 
                     for (NotificationRetryInfo notificationRetryInfo : notificationRetryInfoList) {
                         RetryInfo retryInfo = retryInfoMap.get(notificationRetryInfo.id());
                         if (retryInfo != null) {
-                            messages.add(NotificationQueueMessage.of(notificationRetryInfo.id(), notificationRetryInfo.receiverId(),
+                            messages.add(LegacyNotificationQueueMessage.of(notificationRetryInfo.id(), notificationRetryInfo.receiverId(),
                                     notificationRetryInfo.payload(), retryInfo.attempt()));
                         } else {
                             log.warn("id number mismatch (NotificationRetryInfo: {})", notificationRetryInfo.id());

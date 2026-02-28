@@ -1,13 +1,17 @@
 package com.minhyung.schedule.notification.config;
 
 import com.minhyung.schedule.log.AsyncExecStats;
-import com.minhyung.schedule.notification.domain.QueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationCreateQueueMessage;
+import com.minhyung.schedule.notification.domain.NotificationQueueMessage;
 import com.minhyung.schedule.notification.encoder.PayloadEncoderRegistry;
-import com.minhyung.schedule.notification.handler.InviteNotificationOutboxEventHandler;
+import com.minhyung.schedule.notification.handler.LegacyInviteNotificationOutboxEventHandler;
 import com.minhyung.schedule.notification.handler.NotificationCreateEventHandler;
+import com.minhyung.schedule.notification.handler.InviteNotificationOutboxBatchEventHandler;
 import com.minhyung.schedule.notification.props.NotifyLeaseProps;
 import com.minhyung.schedule.notification.props.NotifyOutboxClaimerProps;
 import com.minhyung.schedule.notification.props.NotifyOutboxCommitterProps;
+import com.minhyung.schedule.notification.props.NotifyOutboxCreateProps;
+import com.minhyung.schedule.notification.repository.NotificationOutboxJdbcRepository;
 import com.minhyung.schedule.notification.repository.NotificationOutboxRepository;
 import com.minhyung.schedule.notification.repository.NotificationRepository;
 import com.minhyung.schedule.notification.service.*;
@@ -28,22 +32,40 @@ import java.util.concurrent.LinkedBlockingQueue;
 @ConditionalOnProperty(name = "notify.mode", havingValue="outbox", matchIfMissing=true)
 public class NotificationConfig {
     @Bean
-    public NotificationCreateEventHandler notificationCreateEventHandler(
-            @Qualifier("invitationNotificationOutboxService") NotificationService notificationService,
+    public NotificationCreateEventHandler notificationCreateBatchEventHandler(
+            @Qualifier("inviteNotificationQueuePublisher") QueuePublisher<NotificationCreateQueueMessage> queuePublisher,
             PayloadEncoderRegistry payloadEncoderRegistry
     ) {
-        return new InviteNotificationOutboxEventHandler(notificationService, payloadEncoderRegistry);
+        return new InviteNotificationOutboxBatchEventHandler(queuePublisher, payloadEncoderRegistry);
+    }
+
+    @Deprecated
+//    @Bean
+    public NotificationCreateEventHandler notificationCreateLegacyEventHandler(
+            @Qualifier("legacyInvitationNotificationOutboxService") NotificationService notificationService,
+            PayloadEncoderRegistry payloadEncoderRegistry
+    ) {
+        return new LegacyInviteNotificationOutboxEventHandler(notificationService, payloadEncoderRegistry);
+    }
+
+    @Deprecated
+//    @Bean
+    public NotificationService legacyInvitationNotificationOutboxService(NotificationRepository notificationRepository,
+                                                                         NotificationOutboxRepository outboxRepository,
+                                                                         EntityManager em) {
+        return new LegacyInvitationNotificationOutboxService(notificationRepository, outboxRepository, em);
     }
 
     @Bean
-    public NotificationService invitationNotificationOutboxService(NotificationRepository notificationRepository,
-                                                                   NotificationOutboxRepository outboxRepository,
-                                                                   EntityManager em) {
-        return new InvitationNotificationOutboxService(notificationRepository, outboxRepository, em);
+    public NotificationCreateWorker notificationCreateWorker(@Qualifier("inviteNotificationQueue") BlockingQueue<NotificationCreateQueueMessage> notificationQueue,
+                                                             @Qualifier("notificationCreateExecutor") ThreadPoolTaskExecutor executor,
+                                                             NotifyOutboxCreateProps props,
+                                                             NotificationOutboxJdbcRepository notificationOutboxJdbcRepository) {
+        return new NotificationCreateWorker(notificationQueue, executor, props, notificationOutboxJdbcRepository);
     }
 
     @Bean
-    public NotificationClaimer notificationClaimer(@Qualifier("notificationQueuePublisher") QueuePublisher queuePublisher,
+    public NotificationClaimer notificationClaimer(@Qualifier("notificationQueuePublisher") QueuePublisher<NotificationQueueMessage> queuePublisher,
                                                    @Qualifier("notificationClaimerExecutor") ThreadPoolTaskExecutor executor,
                                                    NotifyOutboxClaimerProps props,
                                                    NotificationOutboxService outboxService) {
@@ -57,12 +79,12 @@ public class NotificationConfig {
     }
 
     @Bean
-    public NotificationSenderWorker notificationSenderWorker(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue,
+    public NotificationSenderWorker notificationSenderWorker(@Qualifier("notificationQueue") BlockingQueue<NotificationQueueMessage> queue,
                                                              @Qualifier("notificationSenderExecutor") ThreadPoolTaskExecutor executor,
                                                              SseService sseService,
-                                                             @Qualifier("successQueuePublisher") QueuePublisher successQueuePublisher,
-                                                             @Qualifier("failureQueuePublisher") QueuePublisher failureQueuePublisher,
-                                                             @Qualifier("retryQueuePublisher") QueuePublisher retryQueuePublisher
+                                                             @Qualifier("successQueuePublisher") QueuePublisher<NotificationQueueMessage> successQueuePublisher,
+                                                             @Qualifier("failureQueuePublisher") QueuePublisher<NotificationQueueMessage> failureQueuePublisher,
+                                                             @Qualifier("retryQueuePublisher") QueuePublisher<NotificationQueueMessage> retryQueuePublisher
     ) {
         return new NotificationSenderWorker(queue, executor, sseService, successQueuePublisher, failureQueuePublisher, retryQueuePublisher);
     }
@@ -70,7 +92,7 @@ public class NotificationConfig {
     @Bean
     public NotificationOutboxCommitter notificationSuccessCommitter(@Qualifier("notificationSuccessExecutor") ThreadPoolTaskExecutor executor,
                                                                     NotifyOutboxCommitterProps props,
-                                                                    @Qualifier("successQueue") BlockingQueue<QueueMessage> successQueue,
+                                                                    @Qualifier("successQueue") BlockingQueue<NotificationQueueMessage> successQueue,
                                                                     NotificationOutboxService outboxService) {
         return new NotificationSuccessCommitter(executor, props, successQueue, outboxService);
     }
@@ -78,7 +100,7 @@ public class NotificationConfig {
     @Bean
     public NotificationOutboxCommitter notificationFailureCommitter(@Qualifier("notificationFailureExecutor") ThreadPoolTaskExecutor executor,
                                                                     NotifyOutboxCommitterProps props,
-                                                                    @Qualifier("failureQueue") BlockingQueue<QueueMessage> failureQueue,
+                                                                    @Qualifier("failureQueue") BlockingQueue<NotificationQueueMessage> failureQueue,
                                                                     NotificationOutboxService outboxService) {
         return new NotificationFailureCommitter(executor, props, failureQueue, outboxService);
     }
@@ -86,49 +108,59 @@ public class NotificationConfig {
     @Bean
     public NotificationOutboxCommitter notificationRetryCommitter(@Qualifier("notificationRetryExecutor") ThreadPoolTaskExecutor executor,
                                                                   NotifyOutboxCommitterProps props,
-                                                                  @Qualifier("retryQueue") BlockingQueue<QueueMessage> retryQueue,
+                                                                  @Qualifier("retryQueue") BlockingQueue<NotificationQueueMessage> retryQueue,
                                                                   NotificationOutboxService outboxService,
                                                                   BackoffCalculator backoffCalculator) {
         return new NotificationRetryCommitter(executor, props, retryQueue, outboxService, backoffCalculator);
     }
 
     @Bean
-    public QueuePublisher notificationQueuePublisher(@Qualifier("notificationQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryQueuePublisher(queue);
+    public QueuePublisher<NotificationCreateQueueMessage> inviteNotificationQueuePublisher(@Qualifier("inviteNotificationQueue") BlockingQueue<NotificationCreateQueueMessage> queue) {
+        return new InMemoryNotificationQueuePublisher<>(queue);
     }
 
     @Bean
-    BlockingQueue<QueueMessage> notificationQueue() {
+    BlockingQueue<NotificationCreateQueueMessage> inviteNotificationQueue() {
         return new LinkedBlockingQueue<>(500);
     }
 
     @Bean
-    public QueuePublisher successQueuePublisher(@Qualifier("successQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryQueuePublisher(queue);
+    public QueuePublisher<NotificationQueueMessage> notificationQueuePublisher(@Qualifier("notificationQueue") BlockingQueue<NotificationQueueMessage> queue) {
+        return new InMemoryNotificationQueuePublisher<>(queue);
     }
 
     @Bean
-    BlockingQueue<QueueMessage> successQueue() {
+    BlockingQueue<NotificationQueueMessage> notificationQueue() {
         return new LinkedBlockingQueue<>(500);
     }
 
     @Bean
-    public QueuePublisher failureQueuePublisher(@Qualifier("failureQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryQueuePublisher(queue);
+    public QueuePublisher<NotificationQueueMessage> successQueuePublisher(@Qualifier("successQueue") BlockingQueue<NotificationQueueMessage> queue) {
+        return new InMemoryNotificationQueuePublisher<>(queue);
     }
 
     @Bean
-    BlockingQueue<QueueMessage> failureQueue() {
+    BlockingQueue<NotificationQueueMessage> successQueue() {
         return new LinkedBlockingQueue<>(500);
     }
 
     @Bean
-    public QueuePublisher retryQueuePublisher(@Qualifier("retryQueue") BlockingQueue<QueueMessage> queue) {
-        return new InMemoryQueuePublisher(queue);
+    public QueuePublisher<NotificationQueueMessage> failureQueuePublisher(@Qualifier("failureQueue") BlockingQueue<NotificationQueueMessage> queue) {
+        return new InMemoryNotificationQueuePublisher<>(queue);
     }
 
     @Bean
-    BlockingQueue<QueueMessage> retryQueue() {
+    BlockingQueue<NotificationQueueMessage> failureQueue() {
+        return new LinkedBlockingQueue<>(500);
+    }
+
+    @Bean
+    public QueuePublisher<NotificationQueueMessage> retryQueuePublisher(@Qualifier("retryQueue") BlockingQueue<NotificationQueueMessage> queue) {
+        return new InMemoryNotificationQueuePublisher<>(queue);
+    }
+
+    @Bean
+    BlockingQueue<NotificationQueueMessage> retryQueue() {
         return new LinkedBlockingQueue<>(500);
     }
 
@@ -161,12 +193,23 @@ public class NotificationConfig {
     }
 
     @Bean
+    public ThreadPoolTaskExecutor notificationCreateExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(0);
+        executor.setThreadNamePrefix("notify-create-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean
     public ThreadPoolTaskExecutor notificationClaimerExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(1);
         executor.setQueueCapacity(0);
-        executor.setThreadNamePrefix("notify-");
+        executor.setThreadNamePrefix("notify-claimer-");
         executor.initialize();
         return executor;
     }
